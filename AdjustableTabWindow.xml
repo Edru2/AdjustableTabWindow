@@ -584,10 +584,12 @@ function Adjustable.TabWindow:load()
                 myWindow:addTab(v1,k1)
             end
         end
-        myWindow:deactivateTab()
-        myWindow.current = v.current
-        tempTimer(0, function() myWindow:activateTab(v.current) end)
-        myWindow:raiseAll()    
+	if myWindow then
+	    myWindow:deactivateTab()
+	    myWindow.current = v.current
+	    tempTimer(0, function() myWindow:activateTab(v.current) end)
+	    myWindow:raiseAll() 
+	end
         -- load floating Tabs
         if v.floatingTabs then
             for k1, v1 in pairs(v.floatingTabs) do
