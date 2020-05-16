@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE MudletPackage>
 <MudletPackage version="1.001">
+	<TriggerPackage />
+	<TimerPackage />
+	<AliasPackage />
+	<ActionPackage />
 	<ScriptPackage>
 		<Script isActive="yes" isFolder="no">
 			<name>AdjustableTabWindow</name>
@@ -8,7 +12,7 @@
 			<script>-- Adjustable TabWindow
 -- TabWindow code by Mudlet Wiki
 -- other functions
--- by Edru 11th May 2020 
+-- by Edru 16th May 2020 
 
 Adjustable = Adjustable or {}
 Adjustable.TabWindow = Adjustable.TabWindow or Geyser.Container:new({name = "AdjustableTabWindowClass"})
@@ -159,13 +163,13 @@ end
 
 -- onMove function
 -- contains all the functionality to move the tab (collision check, make space ...)
-function Adjustable.TabWindow:onMove(tab, event)  
+function Adjustable.TabWindow:onMove(tab, event)
     self[tab.."tab"]:onMove(self[tab.."tab"].adjLabel, event)
     self[tab.."tab"].adjLabel:echo(self[tab].tabText)
     if self[tab].floating then
         return
     end
-    if Adjustable.TabWindow.clicked then
+    if Adjustable.TabWindow.clicked then  
         local result, value = self:checkMultiCollision(self[tab.."tab"])
         if Adjustable.TabWindow.currentWindow and Adjustable.TabWindow.currentWindow ~= value then
             -- reset the tab space
@@ -260,7 +264,7 @@ end
 
 -- deactivates and hides the current active tab
 function Adjustable.TabWindow:deactivateTab()
-    if self.current then  
+    if self.current and self[self.current] then  
         self[self.current.."tab"].adjLabelstyle = self.inactiveTabStyle
         self[self.current.."tab"].adjLabel:setStyleSheet(self.inactiveTabStyle)
         self[self.current]:hide()
@@ -609,6 +613,63 @@ function Adjustable.TabWindow:load()
     end
 end
 
+function Adjustable.TabWindow:transferEMCO(emco)
+  emco:hide()
+  local emco_tabs = emco.tabs
+  local emco_tabwindows = table.keys(emco.mc)
+  local emco_windows = emco.mc
+  local myXEcho = 
+  function(s, tabName, message, xtype, excludeAll)
+    s.currentTab = self.current        
+    if s.blink and tabName ~= s.currentTab then
+      if not (s.allTabName == s.currentTab and not s.blinkFromAll) then
+        s.tabsToBlink[tabName] = true
+      end
+    end   
+    EMCO.xEcho(s, tabName, message, xtype, excludeAll)
+   end
+  
+  local myFlash = 
+  function(s)
+    Geyser.Container.flash(s) 
+    raiseWindow(s.name .."_dimensions_flash")
+  end
+  
+  local myDoBlink =
+  function(s)
+    s.currentTab = self.current
+    if s.blink then
+      if s.allTab and (s.currentTab == s.allTabName or self[s.allTabName].hidden == false) then
+        s.tabsToBlink = {}
+      elseif s.tabsToBlink[s.currentTab] then
+        s.tabsToBlink[s.currentTab] = nil
+      end
+    end    
+    for tab,_ in pairs(s.tabsToBlink) do
+      if not self[tab].floating and self[tab].hidden then
+        s.tabs[tab]:flash()
+      else
+        s.tabsToBlink[tab] = nil
+      end
+    end
+  end
+
+  self.tabs = table.n_union(self.tabs, emco_tabwindows)
+  self:createTabs()
+  for k,v in ipairs(emco_tabwindows) do
+    emco_windows[v]:show()
+    emco_windows[v]:changeContainer(self[v.."center"])
+    emco_tabs[v]:changeContainer(self[v.."tab"])
+    emco_tabs[v]:move(0,0)
+    emco_tabs[v]:resize("100%","100%")
+    emco_tabs[v]:hide()
+    emco_tabs[v].flash = myFlash
+  end
+  emco.xEcho = myXEcho
+  emco.doBlink = myDoBlink
+end
+
+
 -- Save a reference to our parent constructor
 Adjustable.TabWindow.parent = Geyser.Container
 -- Create table to put every Adjustable.TabWindow in it
@@ -714,4 +775,8 @@ end</script>
 			<eventHandlerList />
 		</Script>
 	</ScriptPackage>
+	<KeyPackage />
+	<HelpPackage>
+		<helpURL></helpURL>
+	</HelpPackage>
 </MudletPackage>
