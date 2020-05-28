@@ -19,12 +19,20 @@ Adjustable.TabWindow = Adjustable.TabWindow or Geyser.Container:new({name = "Adj
 local tab_pos = nil
 
 function Adjustable.TabWindow:createBaseContainers()
-    self.header = self.header or Geyser.HBox:new({
-        name = self.name.."header",
+    self.tabBar = self.tabBar or Geyser.Label:new({        
+        name = self.name.."tabBar",
         x = 0, y = 0,
         width = "100%",
         height = self.tabBarHeight,
     },self)
+    self.tabBar:setStyleSheet(self.tabBarStyle)
+    
+    self.header = self.header or Geyser.HBox:new({
+        name = self.name.."header",
+        x = 0, y = 0,
+        width = "100%",
+        height = "100%",
+    },self.tabBar)
     
     self.overlay = self.overlay or Geyser.Label:new({
         name = self.name.."overlay",
@@ -97,7 +105,6 @@ function Adjustable.TabWindow:createTabs()
         self[v.."tab"].adjLabelstyle = self.inactiveTabStyle
         self[v.."tab"].titleTxtColor = self.tabTxtColor
         self[v.."tab"].adjLabel:setStyleSheet(self.inactiveTabStyle)
-        
         
         self[v.."tab"].adjLabel:echo(self[v].tabText)
         
@@ -233,7 +240,7 @@ end
 function Adjustable.TabWindow:onOverlayClick(event) 
     Adjustable.TabWindow.doubleClick = nil
     local tab = Adjustable.TabWindow.clickedTab
-    local container = Adjustable.TabWindow.clickedTab.container.container or self
+    local container = Adjustable.TabWindow.clickedTab.container.container.container or self
     tab.adjLabel:setStyleSheet(container.activeTabStyle)
     if container[tab.tabname].floating then
         container:restoreTab(tab.tabname, self)
@@ -750,6 +757,10 @@ function Adjustable.TabWindow:new(cons, container)
     me.overlayStyle = me.overlayStyle or [[
     background-color: rgba(0,0,0,0%);
     border: 2px solid white;]]
+    
+    me.tabBarStyle = me.tabBarStyle or [[
+    background-color: rgba(0,0,0,0%);
+    ]]
     
     me:createBaseContainers()
     me:createTabs()
