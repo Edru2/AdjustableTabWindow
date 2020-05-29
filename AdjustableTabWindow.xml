@@ -625,6 +625,8 @@ function Adjustable.TabWindow:transferEMCO(emco)
   local emco_tabs = emco.tabs
   local emco_tabwindows = table.keys(emco.mc)
   local emco_windows = emco.mc
+  
+  -- xEcho override
   local myXEcho = 
   function(s, tabName, message, xtype, excludeAll)
     s.currentTab = self.current        
@@ -636,12 +638,13 @@ function Adjustable.TabWindow:transferEMCO(emco)
     EMCO.xEcho(s, tabName, message, xtype, excludeAll)
    end
   
+  -- Flash override
   local myFlash = 
   function(s)
     Geyser.Container.flash(s) 
     raiseWindow(s.name .."_dimensions_flash")
   end
-  
+  -- doBlink override
   local myDoBlink =
   function(s)
     s.currentTab = self.current
@@ -660,7 +663,8 @@ function Adjustable.TabWindow:transferEMCO(emco)
       end
     end
   end
-
+  
+  --transfering process
   self.tabs = table.n_union(self.tabs, emco_tabwindows)
   self:createTabs()
   for k,v in ipairs(emco_tabwindows) do
@@ -671,6 +675,9 @@ function Adjustable.TabWindow:transferEMCO(emco)
     emco_tabs[v]:resize("100%","100%")
     emco_tabs[v]:hide()
     emco_tabs[v].flash = myFlash
+    if emco_tabs[v].font then
+      self[v.."tab"].adjLabel:setFont(emco_tabs[v].font)
+    end
   end
   emco.xEcho = myXEcho
   emco.doBlink = myDoBlink
