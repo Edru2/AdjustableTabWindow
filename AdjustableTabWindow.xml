@@ -493,6 +493,7 @@ function Adjustable.TabWindow:removeTab(which)
         self.header:remove(self[self.tabs[which].."tab"])
         self.header:organize()
         table.remove(self.tabs, which)
+        self:activateTab(self.tabs[1])
         return true
     end
     local index = table.index_of(self.tabs, which)
@@ -501,6 +502,7 @@ function Adjustable.TabWindow:removeTab(which)
         self.header:remove(self[self.tabs[index].."tab"])
         self.header:organize()
         table.remove(self.tabs, index)
+        self:activateTab(self.tabs[1])
         return true
     end
     return nil, "removeTab: Couldn't find tab to remove"
@@ -539,12 +541,15 @@ function Adjustable.TabWindow:addTab(name, pos)
         self:createTabs()
     end
     
+    --If the container isn't the right one change it (useful if removed in one adj tabwindow and added to another)
+    self[name]:changeContainer(self.footer)
+    self[name.."tab"]:changeContainer(self.header)  
+    
     -- if name is already in windows delete it to put it into the right position
     local headerIndex = table.index_of(self.header.windows, self[name.."tab"].name)
     if headerIndex then
       table.remove(self.header.windows, headerIndex)
     end
-      
     table.insert(self.header.windows, pos, self[name.."tab"].name)
     self.header.windowList[self[name.."tab"].name] = self[name.."tab"]
     self[name.."tab"]:show()
@@ -706,7 +711,10 @@ function Adjustable.TabWindow:transferEMCO(emco)
   local myRemoveTab =
   function(s, tabName)
     EMCO.removeTab(s, tabName)
-    self:removeTab(tabName)
+    if self[tabName].floating then
+      self:restoreTab(tabName)
+    end
+    Adjustable.TabWindow.allTabs[tabName]:removeTab(tabName)
   end
   
   --transfering process
