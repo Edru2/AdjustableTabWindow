@@ -12,7 +12,7 @@
 			<script>-- Adjustable TabWindow
 -- TabWindow code by Mudlet Wiki
 -- other functions
--- by Edru 16th May 2020 
+-- by Edru 11th August 2020 
 
 Adjustable = Adjustable or {}
 Adjustable.TabWindow = Adjustable.TabWindow or Geyser.Container:new({name = "AdjustableTabWindowClass"})
@@ -261,12 +261,14 @@ end
 -- activates the tab tab (doesn't deactivate the previous tab)
 -- @see Adjustable.TabWindow:deactivateTab()
 function Adjustable.TabWindow:activateTab(tab)
+    self:deactivateTab()
     self.current = tab
   if self.current then
     self[tab.."tab"].adjLabelstyle = self.activeTabStyle
     self[tab.."tab"].adjLabel:setStyleSheet(self.activeTabStyle)
     self[self.current]:show()
     end
+    self:raiseAll()
 end
 
 -- deactivates and hides the current active tab
@@ -300,7 +302,6 @@ function Adjustable.TabWindow:onClick(tab, event)
         self[tab.."tab"]:onClick(self[tab.."tab"].adjLabel, event)
     end
     if not self[tab].floating then
-        self:deactivateTab()
         self:activateTab(tab)
     end
 end
@@ -350,6 +351,9 @@ function Adjustable.TabWindow:transformTabContainer(tab)
     else 
         myWindow.current = nil
     end
+    container.adjLabelstyle = self.activeTabStyle
+    container.adjLabel:setStyleSheet(self.activeTabStyle)
+    self[tab]:show()
 end
 
 --restores the window to be a tab again
@@ -400,18 +404,20 @@ end
 
 -- function to change the parent window of the tab 
 function Adjustable.TabWindow:changeTabContainer(tab, myWindow, position)
-    myWindow[tab] = self[tab]
-    myWindow[tab.."tab"] = self[tab.."tab"]
-    myWindow[tab.."center"] = self[tab.."center"]
-    self[tab.."tab"].container = not(self[tab].floating) and self.header or Geyser 
-    self[tab]:changeContainer(myWindow.footer)
-    self[tab.."tab"]:changeContainer(myWindow.header)
-    if not (self[tab].floating) then
-        self:removeTab(tab)
-        self:createTabs()
+    if self ~= myWindow or self[tab].floating then
+      myWindow[tab] = self[tab]
+      myWindow[tab.."tab"] = self[tab.."tab"]
+      myWindow[tab.."center"] = self[tab.."center"]
+      self[tab.."tab"].container = not(self[tab].floating) and self.header or Geyser 
+      self[tab]:changeContainer(myWindow.footer)
+      self[tab.."tab"]:changeContainer(myWindow.header)
+      if not (self[tab].floating) then
+          self:removeTab(tab)
+          self:createTabs()
+      end
+      myWindow:createTabs()
+      myWindow[tab.."tab"]:show()
     end
-    myWindow:createTabs()
-    myWindow[tab.."tab"]:show()
     myWindow:addTab(tab, position)
     if self.current then
         self[self.current]:show()
@@ -528,14 +534,22 @@ function Adjustable.TabWindow:addTab(name, pos)
     end
     table.insert(self.tabs, pos, name)
     
-    -- if tab is new created a new Label
+    -- if tab is new create a new Label
     if not index then
         self:createTabs()
-        table.remove(self.header.windows, #self.header.windows)
     end
     
+    -- if name is already in windows delete it to put it into the right position
+    local headerIndex = table.index_of(self.header.windows, self[name.."tab"].name)
+    if headerIndex then
+      table.remove(self.header.windows, headerIndex)
+    end
+      
     table.insert(self.header.windows, pos, self[name.."tab"].name)
+    self.header.windowList[self[name.."tab"].name] = self[name.."tab"]
+    self[name.."tab"]:show()
     self.header:organize()
+    self:activateTab(name)
     return true
 end
 
@@ -621,6 +635,7 @@ function Adjustable.TabWindow:load()
 end
 
 function Adjustable.TabWindow:transferEMCO(emco)
+  local EMCO = EMCO or require("MDK-1.EMCO")
   emco:hide()
   local emco_tabs = emco.tabs
   local emco_tabwindows = table.keys(emco.mc)
@@ -664,21 +679,46 @@ function Adjustable.TabWindow:transferEMCO(emco)
     end
   end
   
+  --function for transfering tab and console
+  local function transferTab(tabwindow)
+    emco_windows[tabwindow]:show()
+    emco_windows[tabwindow]:changeContainer(self[tabwindow.."center"])
+    emco_tabs[tabwindow]:changeContainer(self[tabwindow.."tab"])
+    emco_tabs[tabwindow]:move(0,0)
+    emco_tabs[tabwindow]:resize("100%","100%")
+    emco_tabs[tabwindow]:hide()
+    emco_tabs[tabwindow].flash = myFlash
+    if emco_tabs[tabwindow].font then
+      self[tabwindow.."tab"].adjLabel:setFont(emco_tabs[tabwindow].font)
+    end  
+  end
+  
+  --addTab override
+  local myAddTab =
+  function(s, tabName, position)
+    EMCO.addTab(s, tabName)
+    self:addTab(tabName, position)
+    transferTab(tabName)
+    self:activateTab(tabName)
+  end
+  
+  --removeTab override
+  local myRemoveTab =
+  function(s, tabName)
+    EMCO.removeTab(s, tabName)
+    self:removeTab(tabName)
+  end
+  
   --transfering process
   self.tabs = table.n_union(self.tabs, emco_tabwindows)
   self:createTabs()
   for k,v in ipairs(emco_tabwindows) do
-    emco_windows[v]:show()
-    emco_windows[v]:changeContainer(self[v.."center"])
-    emco_tabs[v]:changeContainer(self[v.."tab"])
-    emco_tabs[v]:move(0,0)
-    emco_tabs[v]:resize("100%","100%")
-    emco_tabs[v]:hide()
-    emco_tabs[v].flash = myFlash
-    if emco_tabs[v].font then
-      self[v.."tab"].adjLabel:setFont(emco_tabs[v].font)
-    end
+    transferTab(v)
   end
+  self:activateTab(self.tabs[#self.tabs])
+  emco.reset = function() end
+  emco.removeTab = myRemoveTab
+  emco.addTab = myAddTab
   emco.xEcho = myXEcho
   emco.doBlink = myDoBlink
 end
