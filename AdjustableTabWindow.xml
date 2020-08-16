@@ -14,9 +14,6 @@
 -- other functions
 -- by Edru 16th August 2020 
 
--- EMCO by demonnic https://github.com/demonnic/EMCO
-
-
 Adjustable = Adjustable or {}
 Adjustable.TabWindow = Adjustable.TabWindow or Geyser.Container:new({name = "AdjustableTabWindowClass"})
 local tab_pos = nil
@@ -24,38 +21,38 @@ local tab_pos = nil
 --Geyser.Label echo function overwritten to not have the color function in it
 --needed for allowing stylesheet to control the text color
 local function noColorEcho(self, message, color, format)
-  message = message or self.message
-  self.message = message
-  if format then self:processFormatString(format) end
-
-  local ft = self.formatTable
-  local fs = ft.fontSize
-  local alignment = ft.alignment
-  if alignment ~= "" then
-    alignment = string.format([[align="%s" ]], alignment)
-  end
-  if ft.bold then
-    message = "&lt;b&gt;" .. message .. "&lt;/b&gt;"
-  end
-  if ft.italics then
-    message = "&lt;i&gt;" .. message .. "&lt;/i&gt;"
-  end
-  if ft.underline then
-    message = "&lt;u&gt;" .. message .. "&lt;/u&gt;"
-  end
-  if ft.strikethrough then
-    message = "&lt;s&gt;" .. message .. "&lt;/s&gt;"
-  end
-  if self.font and self.font ~= "" then
-    message = string.format('&lt;font face ="%s"&gt;%s&lt;/font&gt;', self.font, message)
-  end
-  if not fs then
-    fs = tostring(self.fontSize)
-  end
-  fs = "font-size: " .. fs .. "pt; "
-  message = [[&lt;div ]] .. alignment .. [[ style=" ]] .. fs ..
-  [["&gt;]] .. message .. [[&lt;/div&gt;]]
-  echo(self.name, message)
+    message = message or self.message
+    self.message = message
+    if format then self:processFormatString(format) end
+    
+    local ft = self.formatTable
+    local fs = ft.fontSize
+    local alignment = ft.alignment
+    if alignment ~= "" then
+        alignment = string.format([[align="%s" ]], alignment)
+    end
+    if ft.bold then
+        message = "&lt;b&gt;" .. message .. "&lt;/b&gt;"
+    end
+    if ft.italics then
+        message = "&lt;i&gt;" .. message .. "&lt;/i&gt;"
+    end
+    if ft.underline then
+        message = "&lt;u&gt;" .. message .. "&lt;/u&gt;"
+    end
+    if ft.strikethrough then
+        message = "&lt;s&gt;" .. message .. "&lt;/s&gt;"
+    end
+    if self.font and self.font ~= "" then
+        message = string.format('&lt;font face ="%s"&gt;%s&lt;/font&gt;', self.font, message)
+    end
+    if not fs then
+        fs = tostring(self.fontSize)
+    end
+    fs = "font-size: " .. fs .. "pt; "
+    message = [[&lt;div ]] .. alignment .. [[ style=" ]] .. fs ..
+    [["&gt;]] .. message .. [[&lt;/div&gt;]]
+    echo(self.name, message)
 end
 
 function Adjustable.TabWindow:createBaseContainers()
@@ -179,11 +176,11 @@ end
 --- Sets the amount of space to use between the tabs and the consoles
 -- @tparam number gap Number of pixels to keep between the tabs and consoles
 function Adjustable.TabWindow:setGap(gap)
-  local gapNumber = tonumber(gap)
-  local gapType = type(gap)
-  assert(gapType == "number", "gap expected as number, got " .. gapType)
-  self.gap = gapNumber
-  self.footer:move(0, gapNumber)
+    local gapNumber = tonumber(gap)
+    local gapType = type(gap)
+    assert(gapType == "number", "gap expected as number, got " .. gapType)
+    self.gap = gapNumber
+    self.footer:move(0, gapNumber)
 end
 
 --- Sets the height of the tabs in pixels/percent
@@ -199,129 +196,129 @@ end
 --- Sets the CSS to use for the tab box which contains the tabs for the object
 -- @tparam string css The css styling to use for the tab box
 function Adjustable.TabWindow:setTabBarCSS(css)
-  local cssType = type(css)
-  assert(cssType == "string", "css as string expected, got " .. cssType)
-  self.tabBarStyle = css
-  self.tabBar:setStyleSheet(self.tabBarStyle)
+    local cssType = type(css)
+    assert(cssType == "string", "css as string expected, got " .. cssType)
+    self.tabBarStyle = css
+    self.tabBar:setStyleSheet(self.tabBarStyle)
 end
 
 --- Sets the color to use for the tab box background
 -- @param color Color string suitable for decho or hecho, or color name eg "purple", or table of colors {r,g,b}
 function Adjustable.TabWindow:setTabBarColor(color)
-  self.tabBarColor = color
-  self.tabBarStyle = ""
-  self.tabBar:setStyleSheet(self.tabBarStyle)
-  self.tabBar:setColor(self.tabBarColor)
+    self.tabBarColor = color
+    self.tabBarStyle = ""
+    self.tabBar:setStyleSheet(self.tabBarStyle)
+    self.tabBar:setColor(self.tabBarColor)
 end
 
 --- Sets the FG color for the active tab
 -- @param color Color string suitable for decho or hecho, or color name eg "purple", or table of colors {r,g,b}
 function Adjustable.TabWindow:setActiveTabFGColor(color)
-  local found
-  local add_css
-  local r, g, b = Geyser.Color.parse(color)
-  local rgb = string.format("rgb(%s, %s, %s)",r,g,b)
-  self.activeTabFGColor = color
-  self.activeTabStyle, found = string.gsub(self.activeTabStyle, "(%scolor:).-(;)","%1"..rgb.."%2")
-  if found == 0 then
-    if string.match(self.activeTabStyle,"QLabel{") then
-      add_css = "\nQLabel{color:"..rgb..";}"
-    else
-      add_css = "\ncolor:"..rgb..";"
+    local found
+    local add_css
+    local r, g, b = Geyser.Color.parse(color)
+    local rgb = string.format("rgb(%s, %s, %s)",r,g,b)
+    self.activeTabFGColor = color
+    self.activeTabStyle, found = string.gsub(self.activeTabStyle, "(%scolor:).-(;)","%1"..rgb.."%2")
+    if found == 0 then
+        if string.match(self.activeTabStyle,"QLabel{") then
+            add_css = "\nQLabel{color:"..rgb..";}"
+        else
+            add_css = "\ncolor:"..rgb..";"
+        end
+        self.activeTabStyle = self.activeTabStyle..add_css
     end
-    self.activeTabStyle = self.activeTabStyle..add_css
-  end
-  self:adjustTabStyle()
+    self:adjustTabStyle()
 end
 
 --- Sets the FG color for the inactive tab
 -- @param color Color string suitable for decho or hecho, or color name eg "purple", or table of colors {r,g,b}
 function Adjustable.TabWindow:setInactiveTabFGColor(color)
-  local found
-  local add_css
-  self.inactiveTabFGColor = color
-  local r, g, b = Geyser.Color.parse(color)
-  local rgb = string.format("rgb(%s, %s, %s)",r,g,b)
-  
-  self.inactiveTabStyle, found = string.gsub(self.inactiveTabStyle, "(%scolor:).-(;)","%1"..rgb.."%2") 
-  if found == 0 then
-    if string.match(self.inactiveTabStyle,"QLabel{") then
-      add_css = "\nQLabel{color:"..rgb..";}"
-    elseif string.match(self.inactiveTabStyle,"QLabel::!hover{") then
-      add_css = ""
-      self.inactiveTabStyle = string.gsub(self.inactiveTabStyle, "(QLabel::!.-)(})","%1".."color:"..rgb..";".."%2")
-    else 
-      add_css = "\ncolor:"..rgb..";"
+    local found
+    local add_css
+    self.inactiveTabFGColor = color
+    local r, g, b = Geyser.Color.parse(color)
+    local rgb = string.format("rgb(%s, %s, %s)",r,g,b)
+    
+    self.inactiveTabStyle, found = string.gsub(self.inactiveTabStyle, "(%scolor:).-(;)","%1"..rgb.."%2") 
+    if found == 0 then
+        if string.match(self.inactiveTabStyle,"QLabel{") then
+            add_css = "\nQLabel{color:"..rgb..";}"
+        elseif string.match(self.inactiveTabStyle,"QLabel::!hover{") then
+            add_css = ""
+            self.inactiveTabStyle = string.gsub(self.inactiveTabStyle, "(QLabel::!.-)(})","%1".."color:"..rgb..";".."%2")
+        else 
+            add_css = "\ncolor:"..rgb..";"
+        end
+        self.inactiveTabStyle = self.inactiveTabStyle..add_css
     end
-    self.inactiveTabStyle = self.inactiveTabStyle..add_css
-  end
-  self:adjustTabStyle()
+    self:adjustTabStyle()
 end
 
 --- Sets the BG color for the active tab.
 -- &lt;br&gt;NOTE: If you set CSS for the active tab, it will override this setting.
 -- @param color Color string suitable for decho or hecho, or color name eg "purple", or table of colors {r,g,b}
 function Adjustable.TabWindow:setActiveTabBGColor(color)
-  self.activeTabBGColor = color
-  local r, g, b = Geyser.Color.parse(color)
-  local rgba = string.format("rgba(%s, %s, %s, %s)",r,g,b,"100%%")
-  self.activeTabStyle = string.gsub(self.activeTabStyle, "(background%-color:.-).-(;)","%1 "..rgba.."%2")
-  self:adjustTabStyle()
+    self.activeTabBGColor = color
+    local r, g, b = Geyser.Color.parse(color)
+    local rgba = string.format("rgba(%s, %s, %s, %s)",r,g,b,"100%%")
+    self.activeTabStyle = string.gsub(self.activeTabStyle, "(background%-color:.-).-(;)","%1 "..rgba.."%2")
+    self:adjustTabStyle()
 end
 
 --- Sets the BG color for the inactive tab.
 -- &lt;br&gt;NOTE: If you set CSS for the inactive tab, it will override this setting.
 -- @param color Color string suitable for decho or hecho, or color name eg "purple", or table of colors {r,g,b}
 function Adjustable.TabWindow:setInactiveTabBGColor(color)
-  self.inactiveTabBGColor = color
-  local r, g, b = Geyser.Color.parse(color)
-  local rgba = string.format("rgba(%s, %s, %s, %s)",r,g,b,"100%%")
-  self.inactiveTabStyle = string.gsub(self.inactiveTabStyle, "(background%-color:.-).-(;)","%1 "..rgba.."%2")
-  self:adjustTabStyle()
+    self.inactiveTabBGColor = color
+    local r, g, b = Geyser.Color.parse(color)
+    local rgba = string.format("rgba(%s, %s, %s, %s)",r,g,b,"100%%")
+    self.inactiveTabStyle = string.gsub(self.inactiveTabStyle, "(background%-color:.-).-(;)","%1 "..rgba.."%2")
+    self:adjustTabStyle()
 end
 
 function Adjustable.TabWindow:adjustTabStyle()
-  local abg_rgb = string.match(self.activeTabBGColor, "%d+.-%d+.-%d+")
-  local ibg_rgb = string.match(self.inactiveTabBGColor, "%d+.-%d+.-%d+")
-  for k,v in ipairs(self.tabs) do
-    if self[v].name == self.current then
-      self[v.."tab"].adjLabelstyle = self.activeTabStyle
-      self[v.."tab"].adjLabel:setStyleSheet(self.activeTabStyle)
-      if abg_rgb then
-        self[v.."tab"].adjLabel:setColor("&lt;"..abg_rgb.."&gt;")
-      else
-        self[v.."tab"].adjLabel:setColor(self.activeTabBGColor)
-      end
-    else
-      self[v.."tab"].adjLabelstyle = self.inactiveTabStyle
-      self[v.."tab"].adjLabel:setStyleSheet(self.inactiveTabStyle)
-      if ibg_rgb then
-        self[v.."tab"].adjLabel:setColor("&lt;"..ibg_rgb.."&gt;")
-      else
-        self[v.."tab"].adjLabel:setColor(self.inactiveTabBGColor)
-      end
+    local abg_rgb = string.match(self.activeTabBGColor, "%d+.-%d+.-%d+")
+    local ibg_rgb = string.match(self.inactiveTabBGColor, "%d+.-%d+.-%d+")
+    for k,v in ipairs(self.tabs) do
+        if self[v].name == self.current then
+            self[v.."tab"].adjLabelstyle = self.activeTabStyle
+            self[v.."tab"].adjLabel:setStyleSheet(self.activeTabStyle)
+            if abg_rgb then
+                self[v.."tab"].adjLabel:setColor("&lt;"..abg_rgb.."&gt;")
+            else
+                self[v.."tab"].adjLabel:setColor(self.activeTabBGColor)
+            end
+        else
+            self[v.."tab"].adjLabelstyle = self.inactiveTabStyle
+            self[v.."tab"].adjLabel:setStyleSheet(self.inactiveTabStyle)
+            if ibg_rgb then
+                self[v.."tab"].adjLabel:setColor("&lt;"..ibg_rgb.."&gt;")
+            else
+                self[v.."tab"].adjLabel:setColor(self.inactiveTabBGColor)
+            end
+        end
     end
-  end
 end
 
 --- sets the font for all tabs
 --- @tparam string font the font to use.
 function Adjustable.TabWindow:setTabFont(font)
-  self.tabFont = font
-  for k,v in ipairs(self.tabs) do
-    self[v.."tab"].adjLabel:setFont(font)
-  end
+    self.tabFont = font
+    for k,v in ipairs(self.tabs) do
+        self[v.."tab"].adjLabel:setFont(font)
+    end
 end
 
 --- sets the font for a single tab. If you use setTabFont this will be overridden
 --- @tparam string tabName the tab to change the font of
 --- @tparam string font the font to use for that tab
 function Adjustable.TabWindow:setSingleTabFont(tabName, font)
-  local funcName = "EMCO:setSingleTabFont(tabName, font)"
-  if not table.contains(self.tabs, tabName) then
-    error("tabName must be an existing tab")
-  end
-  self[tabName.."tab"].adjLabel:setFont(font)
+    local funcName = "EMCO:setSingleTabFont(tabName, font)"
+    if not table.contains(self.tabs, tabName) then
+        error("tabName must be an existing tab")
+    end
+    self[tabName.."tab"].adjLabel:setFont(font)
 end
 
 -- finds the right position to drop the tab into
@@ -415,7 +412,8 @@ function Adjustable.TabWindow:onOverlayLeave(event)
 end
 
 -- reset the Overlay label to be hidden
-local function resetOverlay(v)
+local function resetOverlay()
+    local tab = Adjustable.TabWindow.clickedTab
     if Adjustable.TabWindow.overlayTimer then
         killTimer(Adjustable.TabWindow.overlayTimer)
         Adjustable.TabWindow.overlayTimer = nil
@@ -429,6 +427,16 @@ local function resetOverlay(v)
     end
     Adjustable.TabWindow.doubleClick = nil
     tab_pos = nil
+    
+    -- reset Style if overlay is resetet without action
+    if tab then
+        tab.adjLabel:setStyleSheet(tab.adjLabelstyle)
+    end
+    
+    if Adjustable.TabWindow.MouseEventID then     
+        killAnonymousEventHandler(Adjustable.TabWindow.MouseEventID)
+        Adjustable.TabWindow.MouseEventID = nil
+    end
 end
 
 -- handles on overlay click event
@@ -443,7 +451,7 @@ function Adjustable.TabWindow:onOverlayClick(event)
     else
         container:onRelease(tab.tabname, event)
     end
-    resetOverlay(self)
+    resetOverlay()
 end
 
 -- if clicked on the minimize label the tab will be 
@@ -458,10 +466,10 @@ end
 function Adjustable.TabWindow:activateTab(tab)
     self:deactivateTab()
     self.current = tab
-  if self.current then
-    self[tab.."tab"].adjLabelstyle = self.activeTabStyle
-    self[tab.."tab"].adjLabel:setStyleSheet(self.activeTabStyle)
-    self[self.current]:show()
+    if self.current then
+        self[tab.."tab"].adjLabelstyle = self.activeTabStyle
+        self[tab.."tab"].adjLabel:setStyleSheet(self.activeTabStyle)
+        self[self.current]:show()
     end
     self:raiseAll()
 end
@@ -515,7 +523,28 @@ function Adjustable.TabWindow:onDoubleClick(tab, event)
         v.overlay:raise()
         v.overlay:setStyleSheet(v.overlayStyle)
     end
-    Adjustable.TabWindow.overlayTimer = Adjustable.TabWindow.overlayTimer or tempTimer(10, function() resetOverlay(v) end )
+    Adjustable.TabWindow.overlayTimer = Adjustable.TabWindow.overlayTimer or tempTimer(10, function() resetOverlay() end )
+    Adjustable.TabWindow.MouseEventID = Adjustable.TabWindow.MouseEventID or registerAnonymousEventHandler("sysWindowMousePressEvent", "Adjustable.TabWindow.onMouseClick", true)
+end
+
+-- handles the mouseclick event 
+-- used for sending windows to the main or userwindow after using doubleclick on a tab
+function Adjustable.TabWindow.onMouseClick( event, button, x, y, windowname )
+    local tab = Adjustable.TabWindow.clickedTab
+    local container = Adjustable.TabWindow.clickedTab.container.container.container
+    container:transformTabContainer(tab.tabname)
+    local newContainer
+    if windowname == "main" then
+        newContainer = Geyser
+    else
+        newContainer = Geyser.windowList[windowname.."Container"].windowList[windowname]
+    end
+    tab:changeContainer(newContainer)
+    tab:raiseAll()
+    tab:move(x,y)
+    killAnonymousEventHandler(Adjustable.TabWindow.MouseEventID)
+    Adjustable.TabWindow.MouseEventID = nil
+    resetOverlay()
 end
 
 -- transforms the tab to a window
@@ -549,7 +578,7 @@ function Adjustable.TabWindow:transformTabContainer(tab)
     local found
     container.adjLabelstyle, found = string.gsub(self.activeTabStyle, "(qproperty%-alignment%:.-).-(;)","%1 'AlignTop' %2")
     if found == 0 then
-      container.adjLabelstyle = container.adjLabelstyle.."\nqproperty-alignment: 'AlignTop' ;\n"
+        container.adjLabelstyle = container.adjLabelstyle.."\nqproperty-alignment: 'AlignTop' ;\n"
     end
     container.adjLabel:setStyleSheet(container.adjLabelstyle)
     self[tab]:show()
@@ -604,18 +633,18 @@ end
 -- function to change the parent window of the tab 
 function Adjustable.TabWindow:changeTabContainer(tab, myWindow, position)
     if self ~= myWindow or self[tab].floating then
-      myWindow[tab] = self[tab]
-      myWindow[tab.."tab"] = self[tab.."tab"]
-      myWindow[tab.."center"] = self[tab.."center"]
-      self[tab.."tab"].container = not(self[tab].floating) and self.header or Geyser 
-      self[tab]:changeContainer(myWindow.footer)
-      self[tab.."tab"]:changeContainer(myWindow.header)
-      if not (self[tab].floating) then
-          self:removeTab(tab)
-          self:createTabs()
-      end
-      myWindow:createTabs()
-      myWindow[tab.."tab"]:show()
+        myWindow[tab] = self[tab]
+        myWindow[tab.."tab"] = self[tab.."tab"]
+        myWindow[tab.."center"] = self[tab.."center"]
+        self[tab.."tab"].container = not(self[tab].floating) and self.header or Geyser 
+        self[tab]:changeContainer(myWindow.footer)
+        self[tab.."tab"]:changeContainer(myWindow.header)
+        if not (self[tab].floating) then
+            self:removeTab(tab)
+            self:createTabs()
+        end
+        myWindow:createTabs()
+        myWindow[tab.."tab"]:show()
     end
     myWindow:addTab(tab, position)
     if self.current then
@@ -747,7 +776,7 @@ function Adjustable.TabWindow:addTab(name, pos)
     -- if name is already in windows delete it to put it into the right position
     local headerIndex = table.index_of(self.header.windows, self[name.."tab"].name)
     if headerIndex then
-      table.remove(self.header.windows, headerIndex)
+        table.remove(self.header.windows, headerIndex)
     end
     table.insert(self.header.windows, pos, self[name.."tab"].name)
     self.header.windowList[self[name.."tab"].name] = self[name.."tab"]
@@ -813,12 +842,12 @@ function Adjustable.TabWindow:load()
                 myWindow:addTab(v1,k1)
             end
         end
-	if myWindow then
-	    myWindow:deactivateTab()
-	    myWindow.current = v.current
-	    tempTimer(0, function() myWindow:activateTab(v.current) end)
-	    myWindow:raiseAll() 
-	end
+        if myWindow then
+            myWindow:deactivateTab()
+            myWindow.current = v.current
+            tempTimer(0, function() myWindow:activateTab(v.current) end)
+            myWindow:raiseAll() 
+        end
         -- load floating Tabs
         if v.floatingTabs then
             for k1, v1 in pairs(v.floatingTabs) do
@@ -838,110 +867,134 @@ function Adjustable.TabWindow:load()
     end
 end
 
+-- EMCO by demonnic https://github.com/demonnic/EMCO
 function Adjustable.TabWindow:transferEMCO(emco)
-  local EMCO = EMCO or require("MDK-1.EMCO")
-  emco:hide()
-  local emco_tabs = emco.tabs
-  local emco_tabwindows = emco.consoles
-  local emco_windows = emco.mc
-  
-  -- xEcho override
-  local myXEcho = 
-  function(s, tabName, message, xtype, excludeAll)
-    s.currentTab = self.current        
-    if s.blink and tabName ~= s.currentTab then
-      if not (s.allTabName == s.currentTab and not s.blinkFromAll) then
-        s.tabsToBlink[tabName] = true
-      end
-    end   
-    EMCO.xEcho(s, tabName, message, xtype, excludeAll)
-   end
-  
-  -- Flash override
-  local myFlash = 
-  function(s)
-    Geyser.Container.flash(s) 
-    raiseWindow(s.name .."_dimensions_flash")
-  end
-  -- doBlink override
-  local myDoBlink =
-  function(s)
-    s.currentTab = self.current
-    if s.blink then
-      if s.allTab and (s.currentTab == s.allTabName or self[s.allTabName].hidden == false) then
-        s.tabsToBlink = {}
-      elseif s.tabsToBlink[s.currentTab] then
-        s.tabsToBlink[s.currentTab] = nil
-      end
-    end    
-    for tab,_ in pairs(s.tabsToBlink) do
-      if not self[tab].floating and self[tab].hidden then
-        s.tabs[tab]:flash()
-      else
-        s.tabsToBlink[tab] = nil
-      end
+    local EMCO = EMCO or require("MDK-1.EMCO")
+    emco:hide()
+    local emco_tabs = emco.tabs
+    local emco_tabwindows = emco.consoles
+    local emco_windows = emco.mc
+    
+    -- xEcho override
+    local myXEcho = 
+    function(s, tabName, message, xtype, excludeAll)
+        s.currentTab = self.current        
+        if s.blink and tabName ~= s.currentTab then
+            if not (s.allTabName == s.currentTab and not s.blinkFromAll) then
+                s.tabsToBlink[tabName] = true
+            end
+        end   
+        EMCO.xEcho(s, tabName, message, xtype, excludeAll)
     end
-  end
-  
-  --function for transfering tab and console
-  local function transferTab(tabwindow)
-    emco_windows[tabwindow]:show()
-    emco_windows[tabwindow]:changeContainer(self[tabwindow.."center"])
-    emco_tabs[tabwindow]:changeContainer(self[tabwindow.."tab"])
-    emco_tabs[tabwindow]:move(0,0)
-    emco_tabs[tabwindow]:resize("100%","100%")
-    emco_tabs[tabwindow]:hide()
-    emco_tabs[tabwindow].flash = myFlash
-    if emco_tabs[tabwindow].font then
-      self[tabwindow.."tab"].adjLabel:setFont(emco_tabs[tabwindow].font)
-    end  
-  end
-  
-  --addTab override
-  local myAddTab =
-  function(s, tabName, position)
-    EMCO.addTab(s, tabName)
-    self:addTab(tabName, position)
-    transferTab(tabName)
-    self:activateTab(tabName)
-  end
-  
-  --removeTab override
-  local myRemoveTab =
-  function(s, tabName)
-    EMCO.removeTab(s, tabName)
-    if self[tabName].floating then
-      self:restoreTab(tabName)
+    
+    -- Flash override
+    local myFlash = 
+    function(s)
+        Geyser.Container.flash(s) 
+        raiseWindow(s.name .."_dimensions_flash")
     end
-    Adjustable.TabWindow.allTabs[tabName]:removeTab(tabName)
-  end
-  
-  --transfering process
-  self.tabs = table.n_union(self.tabs, emco_tabwindows)
-  self:createTabs()
-  for k,v in ipairs(emco_tabwindows) do
-    transferTab(v)
-  end
-  self:activateTab(emco.currentTab)
-  emco.reset = function() end
-  emco.removeTab = myRemoveTab
-  emco.addTab = myAddTab
-  emco.xEcho = myXEcho
-  emco.doBlink = myDoBlink
-  emco.setGap = function(s, gap) EMCO:setGap(s, gap) self:setGap(gap) end
-  emco.setTabHeight = function(s, height) EMCO.setTabHeight(s, height) self:setTabHeight(height) end
-  emco.setTabBoxColor = function(s, color) EMCO.setTabBarColor(s, color) self:setTabBarColor(color) end
-  emco.setTabBoxCSS = function(s, css) EMCO.setTabBoxCSS(s, css) self:setTabBarCSS(css) end
-  emco.setActiveTabBGColor = function(s, color) self:setActiveTabBGColor(color) EMCO.setActiveTabBGColor(s, color) end
-  emco.setInactiveTabBGColor = function(s, color) self:setInactiveTabBGColor(color) EMCO.setInactiveTabBGColor(s, color) end
-  emco.setActiveTabFGColor = function(s, color) EMCO.setActiveTabFGColor(s, color) self:setActiveTabFGColor(color) end
-  emco.setInactiveTabFGColor = function(s, color) EMCO.setInactiveTabFGColor(s, color) self:setInactiveTabFGColor(color) end
-  emco.setSingleTabFont = function(s, tab, font) EMCO.setSingleTabFont(s, tab, font) self:setSingleTabFont(tab, font) end
-  emco.setTabFont = function(s, font) EMCO.setTabFont(s, font) self:setTabFont(font) end
-  emco.save = function(s) EMCO.save(s) self:save() end
-  emco.load = function(s) EMCO.load(s) self:load() end
+    -- doBlink override
+    local myDoBlink =
+    function(s)
+        s.currentTab = self.current
+        if s.blink then
+            if s.allTab and (s.currentTab == s.allTabName or self[s.allTabName].hidden == false) then
+                s.tabsToBlink = {}
+            elseif s.tabsToBlink[s.currentTab] then
+                s.tabsToBlink[s.currentTab] = nil
+            end
+        end    
+        for tab,_ in pairs(s.tabsToBlink) do
+            if not self[tab].floating and self[tab].hidden then
+                s.tabs[tab]:flash()
+            else
+                s.tabsToBlink[tab] = nil
+            end
+        end
+    end
+    
+    --function for transfering tab and console
+    local function transferTab(tabwindow)
+        emco_windows[tabwindow]:show()
+        emco_windows[tabwindow]:changeContainer(self[tabwindow.."center"])
+        emco_tabs[tabwindow]:changeContainer(self[tabwindow.."tab"])
+        emco_tabs[tabwindow]:move(0,0)
+        emco_tabs[tabwindow]:resize("100%","100%")
+        emco_tabs[tabwindow]:hide()
+        emco_tabs[tabwindow].flash = myFlash
+        if emco_tabs[tabwindow].font then
+            self[tabwindow.."tab"].adjLabel:setFont(emco_tabs[tabwindow].font)
+        end  
+    end
+    
+    --addTab override
+    local myAddTab =
+    function(s, tabName, position)
+        EMCO.addTab(s, tabName)
+        self:addTab(tabName, position)
+        transferTab(tabName)
+        self:activateTab(tabName)
+    end
+    
+    --removeTab override
+    local myRemoveTab =
+    function(s, tabName)
+        EMCO.removeTab(s, tabName)
+        if self[tabName].floating then
+            self:restoreTab(tabName)
+        end
+        Adjustable.TabWindow.allTabs[tabName]:removeTab(tabName)
+    end
+    
+    --transfering process
+    self.tabs = table.n_union(self.tabs, emco_tabwindows)
+    self:createTabs()
+    for k,v in ipairs(emco_tabwindows) do
+        transferTab(v)
+    end
+    self:activateTab(emco.currentTab)
+    emco.reset = function() end
+    emco.removeTab = myRemoveTab
+    emco.addTab = myAddTab
+    emco.xEcho = myXEcho
+    emco.doBlink = myDoBlink
+    emco.setGap = function(s, gap) EMCO:setGap(s, gap) self:setGap(gap) end
+    emco.setTabHeight = function(s, height) EMCO.setTabHeight(s, height) self:setTabHeight(height) end
+    emco.setTabBoxColor = function(s, color) EMCO.setTabBarColor(s, color) self:setTabBarColor(color) end
+    emco.setTabBoxCSS = function(s, css) EMCO.setTabBoxCSS(s, css) self:setTabBarCSS(css) end
+    emco.setActiveTabBGColor = function(s, color) self:setActiveTabBGColor(color) EMCO.setActiveTabBGColor(s, color) end
+    emco.setInactiveTabBGColor = function(s, color) self:setInactiveTabBGColor(color) EMCO.setInactiveTabBGColor(s, color) end
+    emco.setActiveTabFGColor = function(s, color) EMCO.setActiveTabFGColor(s, color) self:setActiveTabFGColor(color) end
+    emco.setInactiveTabFGColor = function(s, color) EMCO.setInactiveTabFGColor(s, color) self:setInactiveTabFGColor(color) end
+    emco.setSingleTabFont = function(s, tab, font) EMCO.setSingleTabFont(s, tab, font) self:setSingleTabFont(tab, font) end
+    emco.setTabFont = function(s, font) EMCO.setTabFont(s, font) self:setTabFont(font) end
+    emco.save = function(s) EMCO.save(s) self:save() end
+    emco.load = function(s) EMCO.load(s) self:load() end
 end
 
+-- EMCO by demonnic https://github.com/demonnic/EMCO
+-- convert EMCO to Adjustable TabWindow
+function Adjustable.TabWindow.convertEMCO(emco)
+    emco.myTabWindow = emco.myTabWindow or Adjustable.TabWindow:new({
+        name = emco.name.."TabWindow", 
+        x = emco.x, 
+        y = emco.y, 
+        width = emco.width, 
+        height = emco.height,
+        activeTabStyle = emco.activeTabCSS,
+        inactiveTabStyle = emco.inactiveTabCSS,
+        tabBarHeight  = emco.tabHeight + 2,
+        gap = emco.gap,
+    },emco.container)
+    emco.myTabWindow:setActiveTabFGColor(emco.activeTabFGColor)
+    emco.myTabWindow:setInactiveTabFGColor(emco.inactiveTabFGColor)
+    emco.myTabWindow:setActiveTabBGColor(emco.activeTabBGColor)
+    emco.myTabWindow:setInactiveTabBGColor(emco.inactiveTabBGColor)
+    emco.myTabWindow:transferEMCO(emco)
+    emco.hide = function() Geyser.Container.hide(emco.myTabWindow) end
+    emco.show = function() Geyser.Container.show(emco.myTabWindow) end
+    emco:show()
+end
 
 -- Save a reference to our parent constructor
 Adjustable.TabWindow.parent = Geyser.Container
@@ -949,30 +1002,6 @@ Adjustable.TabWindow.parent = Geyser.Container
 Adjustable.TabWindow.all = Adjustable.TabWindow.all or {}
 Adjustable.TabWindow.all_windows = Adjustable.TabWindow.all_windows or {}
 Adjustable.TabWindow.allTabs = Adjustable.TabWindow.allTabs or {}
-
-
--- convert EMCO to Adjustable TabWindow
-function Adjustable.TabWindow.convertEMCO(emco)
-  emco.myTabWindow = emco.myTabWindow or Adjustable.TabWindow:new({
-  name = emco.name.."TabWindow", 
-  x = emco.x, 
-  y = emco.y, 
-  width = emco.width, 
-  height = emco.height,
-  activeTabStyle = emco.activeTabCSS,
-  inactiveTabStyle = emco.inactiveTabCSS,
-  tabBarHeight  = emco.tabHeight + 2,
-  gap = emco.gap,
-  },emco.container)
-  emco.myTabWindow:setActiveTabFGColor(emco.activeTabFGColor)
-  emco.myTabWindow:setInactiveTabFGColor(emco.inactiveTabFGColor)
-  emco.myTabWindow:setActiveTabBGColor(emco.activeTabBGColor)
-  emco.myTabWindow:setInactiveTabBGColor(emco.inactiveTabBGColor)
-  emco.myTabWindow:transferEMCO(emco)
-  emco.hide = function() Geyser.Container.hide(emco.myTabWindow) end
-  emco.show = function() Geyser.Container.show(emco.myTabWindow) end
-  emco:show()
-end
 
 -- tabwindow constructor
 function Adjustable.TabWindow:new(cons, container)
@@ -1041,7 +1070,7 @@ function Adjustable.TabWindow:new(cons, container)
     border-top-right-radius: 10px;
     margin-right: 1px;
     margin-left: 1px;
-
+    
     ]]
     
     me.containerStyle = me.containerStyle or [[
@@ -1064,9 +1093,9 @@ function Adjustable.TabWindow:new(cons, container)
     me:createTabs()
     
     if me.tabBarColor then 
-      me:setTabBarColor(me.tabBarColor)
+        me:setTabBarColor(me.tabBarColor)
     else
-      me.tabBarColor = "black"
+        me.tabBarColor = "black"
     end
     me.current = me.current or me.tabs[#me.tabs]
     
@@ -1075,9 +1104,9 @@ function Adjustable.TabWindow:new(cons, container)
     end
     tempTimer(0, 
     function() 
-      if me.tabs[1] then 
-        me[me.tabs[#me.tabs]]:hide()
-      end 
+        if me.tabs[1] then 
+            me[me.tabs[#me.tabs]]:hide()
+        end 
     end )
     
     if not Adjustable.TabWindow.all[me.name] then
