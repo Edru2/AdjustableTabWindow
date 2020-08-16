@@ -115,7 +115,7 @@ function Adjustable.TabWindow:createTabs()
         },self.footer)
         
         self[v]:setStyleSheet(self.containerStyle)
-        self[v].tabText = self[v].tabText or "&lt;center&gt;"..v
+        self[v].tabText = self[v].tabText or v
         
         self[v.."tab"] = self[v.."tab"] or Adjustable.Container:new({
             name = v.."tab",
@@ -131,7 +131,6 @@ function Adjustable.TabWindow:createTabs()
             titleTxtColor = self.tabTxtColor
         }, self.header)
         self[v.."tab"].adjLabel.echo = noColorEcho
-        
         self[v.."tab"]:newLockStyle("tab", 
         function(self)         
             self.Inside:resize("-"..self.padding,"-"..self.padding)
@@ -142,7 +141,7 @@ function Adjustable.TabWindow:createTabs()
         
         self[v.."tab"].unlockContainer = function()
             Adjustable.Container.unlockContainer(self[v.."tab"])
-            self[v.."tab"].adjLabel:echo(self[v].tabText)
+            self[v.."tab"].adjLabel:echo(self[v].tabText, nil, "c")
         end
         
         Adjustable.TabWindow.allTabs[v] = self
@@ -154,7 +153,7 @@ function Adjustable.TabWindow:createTabs()
         self[v.."tab"].titleTxtColor = self.tabTxtColor
         self[v.."tab"].adjLabel:setStyleSheet(self.inactiveTabStyle)
         
-        self[v.."tab"].adjLabel:echo(self[v].tabText)
+        self[v.."tab"].adjLabel:echo(self[v].tabText, nil, "c")
         self[v.."tab"].adjLabel:setClickCallback(function(event) self:onClick(v, event) end)
         self[v.."tab"].adjLabel:setReleaseCallback(function(event) self:onRelease(v, event) end)
         self[v.."tab"].adjLabel:setMoveCallback(function(event) self:onMove(v, event) end)
@@ -363,7 +362,7 @@ end
 -- contains all the functionality to move the tab (collision check, make space ...)
 function Adjustable.TabWindow:onMove(tab, event)
     self[tab.."tab"]:onMove(self[tab.."tab"].adjLabel, event)
-    self[tab.."tab"].adjLabel:echo(self[tab].tabText)
+    self[tab.."tab"].adjLabel:echo(self[tab].tabText, nil, "c")
     if self[tab].floating then
         return
     end
@@ -481,12 +480,11 @@ function Adjustable.TabWindow:onClick(tab, event)
         self[tab.."tab"].minimized = true
         self[tab.."tab"]:unlockContainer()
         self[tab.."tab"]:onClick(self[tab.."tab"].adjLabel, event)
-        self[tab.."tab"].adjLabel:raise(false)
         self[tab.."tab"].exitLabel:hide()
         self[tab.."tab"].minimizeLabel:hide()
         Adjustable.TabWindow.clicked = true
         Adjustable.TabWindow.clickedTab = self[tab.."tab"]
-        self[tab.."tab"].adjLabel:echo(self[tab].tabText)
+        self[tab.."tab"].adjLabel:echo(self[tab].tabText, nil, "c")
     end
     
     if self[tab].floating then
@@ -494,6 +492,7 @@ function Adjustable.TabWindow:onClick(tab, event)
     end
     if not self[tab].floating then
         self:activateTab(tab)
+        self[tab.."tab"].adjLabel:raise(false)
     end
 end
 
@@ -511,7 +510,7 @@ function Adjustable.TabWindow:onDoubleClick(tab, event)
         v.overlay:raise()
         v.overlay:setStyleSheet(v.overlayStyle)
     end
-    Adjustable.TabWindow.overlayTimer = Adjustable.TabWindow.overlayTimer or tempTimer(15, function() resetOverlay(v) end )
+    Adjustable.TabWindow.overlayTimer = Adjustable.TabWindow.overlayTimer or tempTimer(10, function() resetOverlay(v) end )
 end
 
 -- transforms the tab to a window
@@ -533,7 +532,7 @@ function Adjustable.TabWindow:transformTabContainer(tab)
     container:raiseAll()
     myWindow[tab].floating = true
     container.raiseOnClick = true
-    container.adjLabel:echo(self[tab].tabText)
+    container.adjLabel:echo(self[tab].tabText, nil, "c")
     container.minimized = false
     container:setPercent(true, true)
     myWindow:activateTab(tab)
@@ -542,8 +541,12 @@ function Adjustable.TabWindow:transformTabContainer(tab)
     else 
         myWindow.current = nil
     end
-    container.adjLabelstyle = self.activeTabStyle
-    container.adjLabel:setStyleSheet(self.activeTabStyle)
+    local found
+    container.adjLabelstyle, found = string.gsub(self.activeTabStyle, "(qproperty%-alignment%:.-).-(;)","%1 'AlignTop' %2")
+    if found == 0 then
+      container.adjLabelstyle = container.adjLabelstyle.."\nqproperty-alignment: 'AlignTop' ;\n"
+    end
+    container.adjLabel:setStyleSheet(container.adjLabelstyle)
     self[tab]:show()
 end
 
@@ -555,7 +558,7 @@ function Adjustable.TabWindow:restoreTab(tab, myWindow)
     container:remove(self[tab])
     container:setPadding(0)
     container:lockContainer()
-    container.adjLabel:echo(self[tab].tabText)
+    container.adjLabel:echo(self[tab].tabText, nil, "c")
     self:changeTabContainer(tab, myWindow)
     self[tab].floating = false
     container.raiseOnClick = false
@@ -631,7 +634,7 @@ function Adjustable.TabWindow:onRelease(tab, event, position)
         self[tab.."tab"]:lockContainer()
         self[tab.."tab"].container = self.header
         self[tab.."tab"]:onRelease(self[tab.."tab"].adjLabel, event)
-        self[tab.."tab"].adjLabel:echo(self[tab].tabText)
+        self[tab.."tab"].adjLabel:echo(self[tab].tabText, nil, "c")
         tab_pos = tab_pos or myWindow:findPosition(self[tab.."tab"])
         if myWindow ~= self then
             self:changeTabContainer(tab, myWindow)
@@ -664,13 +667,13 @@ function Adjustable.TabWindow:setTabText(which, text)
     text = "&lt;center&gt;"..text
     if type(which) == "number" and which &lt;= #self.tabs then
         self[self.tabs[which]].tabText = text
-        self[self.tabs[which].."tab"].adjLabel:echo(text)
+        self[self.tabs[which].."tab"].adjLabel:echo(text, nil, "c")
         return true
     end
     local index = table.index_of(self.tabs, which)
     if index then
         self[self.tabs[index]].tabText = text
-        self[self.tabs[index].."tab"].adjLabel:echo(text)
+        self[self.tabs[index].."tab"].adjLabel:echo(text, nil, "c")
         return true
     end
     return nil, "setTabText: Couldn't find tab to set a new text"
@@ -1004,7 +1007,7 @@ function Adjustable.TabWindow:new(cons, container)
         border-top-right-radius: 10px;
         margin-right: 1px;
         margin-left: 1px;
-        qproperty-alignment: 'AlignTop';
+        qproperty-alignment: 'AlignVCenter';
     }
     QLabel::!hover{
         background-color: ]]..me.inactiveTabBGColor..[[;
@@ -1013,7 +1016,7 @@ function Adjustable.TabWindow:new(cons, container)
         border-top-right-radius: 10px;
         margin-right: 1px;
         margin-left: 1px;
-        qproperty-alignment: 'AlignTop';
+        qproperty-alignment: 'AlignVCenter';
     }
     ]]
     
@@ -1024,7 +1027,7 @@ function Adjustable.TabWindow:new(cons, container)
     border-top-right-radius: 10px;
     margin-right: 1px;
     margin-left: 1px;
-    qproperty-alignment: 'AlignTop';
+    qproperty-alignment: 'AlignVCenter';
     ]]
     
     me.chosenTabStyle = me.chosenTabStyle or [[
@@ -1033,7 +1036,7 @@ function Adjustable.TabWindow:new(cons, container)
     border-top-right-radius: 10px;
     margin-right: 1px;
     margin-left: 1px;
-    qproperty-alignment: 'AlignTop';
+
     ]]
     
     me.containerStyle = me.containerStyle or [[
