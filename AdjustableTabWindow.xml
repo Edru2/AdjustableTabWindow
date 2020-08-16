@@ -219,13 +219,15 @@ end
 function Adjustable.TabWindow:setActiveTabFGColor(color)
   local found
   local add_css
+  local r, g, b = Geyser.Color.parse(color)
+  local rgb = string.format("rgb(%s, %s, %s)",r,g,b)
   self.activeTabFGColor = color
-  self.activeTabStyle, found = string.gsub(self.activeTabStyle, "(%scolor:.-)%w+(.-;)","%1"..color.."%2")
+  self.activeTabStyle, found = string.gsub(self.activeTabStyle, "(%scolor:).-(;)","%1"..rgb.."%2")
   if found == 0 then
     if string.match(self.activeTabStyle,"QLabel{") then
-      add_css = "\nQLabel{color:"..color..";}"
+      add_css = "\nQLabel{color:"..rgb..";}"
     else
-      add_css = "\ncolor:"..color..";"
+      add_css = "\ncolor:"..rgb..";"
     end
     self.activeTabStyle = self.activeTabStyle..add_css
   end
@@ -238,15 +240,18 @@ function Adjustable.TabWindow:setInactiveTabFGColor(color)
   local found
   local add_css
   self.inactiveTabFGColor = color
-  self.inactiveTabStyle, found = string.gsub(self.inactiveTabStyle, "(%scolor:.-)%w+(.-;)","%1"..color.."%2") 
+  local r, g, b = Geyser.Color.parse(color)
+  local rgb = string.format("rgb(%s, %s, %s)",r,g,b)
+  
+  self.inactiveTabStyle, found = string.gsub(self.inactiveTabStyle, "(%scolor:).-(;)","%1"..rgb.."%2") 
   if found == 0 then
     if string.match(self.inactiveTabStyle,"QLabel{") then
-      add_css = "\nQLabel{color:"..color..";}"
+      add_css = "\nQLabel{color:"..rgb..";}"
     elseif string.match(self.inactiveTabStyle,"QLabel::!hover{") then
       add_css = ""
-      self.inactiveTabStyle = string.gsub(self.inactiveTabStyle, "(QLabel::!.-)(})","%1".."color:"..color..";".."%2")
+      self.inactiveTabStyle = string.gsub(self.inactiveTabStyle, "(QLabel::!.-)(})","%1".."color:"..rgb..";".."%2")
     else 
-      add_css = "\ncolor:"..color..";"
+      add_css = "\ncolor:"..rgb..";"
     end
     self.inactiveTabStyle = self.inactiveTabStyle..add_css
   end
@@ -260,7 +265,7 @@ function Adjustable.TabWindow:setActiveTabBGColor(color)
   self.activeTabBGColor = color
   local r, g, b = Geyser.Color.parse(color)
   local rgba = string.format("rgba(%s, %s, %s, %s)",r,g,b,"100%%")
-  self.activeTabStyle, found = string.gsub(self.activeTabStyle, "(background%-color:.-).-(;)","%1 "..rgba.."%2")
+  self.activeTabStyle = string.gsub(self.activeTabStyle, "(background%-color:.-).-(;)","%1 "..rgba.."%2")
   self:adjustTabStyle()
 end
 
@@ -271,19 +276,19 @@ function Adjustable.TabWindow:setInactiveTabBGColor(color)
   self.inactiveTabBGColor = color
   local r, g, b = Geyser.Color.parse(color)
   local rgba = string.format("rgba(%s, %s, %s, %s)",r,g,b,"100%%")
-  self.inactiveTabStyle, found = string.gsub(self.inactiveTabStyle, "(background%-color:.-).-(;)","%1 "..rgba.."%2")
+  self.inactiveTabStyle = string.gsub(self.inactiveTabStyle, "(background%-color:.-).-(;)","%1 "..rgba.."%2")
   self:adjustTabStyle()
 end
 
 function Adjustable.TabWindow:adjustTabStyle()
-  local abg_rgb = string.match(self.activeTabBGColor, "%d,%d,%d")
-  local ibg_rgb = string.match(self.inactiveTabBGColor, "%d,%d,%d")
+  local abg_rgb = string.match(self.activeTabBGColor, "%d+.-%d+.-%d+")
+  local ibg_rgb = string.match(self.inactiveTabBGColor, "%d+.-%d+.-%d+")
   for k,v in ipairs(self.tabs) do
     if self[v].name == self.current then
       self[v.."tab"].adjLabelstyle = self.activeTabStyle
       self[v.."tab"].adjLabel:setStyleSheet(self.activeTabStyle)
       if abg_rgb then
-        self[v.."tab"].adjLabel:setColor(unpack(string.split(abg_rgb,",")))
+        self[v.."tab"].adjLabel:setColor("&lt;"..abg_rgb.."&gt;")
       else
         self[v.."tab"].adjLabel:setColor(self.activeTabBGColor)
       end
@@ -291,7 +296,7 @@ function Adjustable.TabWindow:adjustTabStyle()
       self[v.."tab"].adjLabelstyle = self.inactiveTabStyle
       self[v.."tab"].adjLabel:setStyleSheet(self.inactiveTabStyle)
       if ibg_rgb then
-        self[v.."tab"].adjLabel:setColor(unpack(string.split(ibg_rgb,",")))
+        self[v.."tab"].adjLabel:setColor("&lt;"..ibg_rgb.."&gt;")
       else
         self[v.."tab"].adjLabel:setColor(self.inactiveTabBGColor)
       end
