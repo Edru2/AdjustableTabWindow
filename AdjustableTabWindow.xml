@@ -958,8 +958,8 @@ function Adjustable.TabWindow:transferEMCO(emco)
     emco.addTab = myAddTab
     emco.xEcho = myXEcho
     emco.doBlink = myDoBlink
-    emco.setGap = function(s, gap) EMCO:setGap(s, gap) self:setGap(gap) end
-    emco.setTabHeight = function(s, height) EMCO.setTabHeight(s, height) self:setTabHeight(height) end
+    emco.setGap = function(s, gap) EMCO.setGap(s, gap) self:setGap(math.max(2,gap) -2) end
+    emco.setTabHeight = function(s, height) EMCO.setTabHeight(s, height) self:setTabHeight(height+2) end
     emco.setTabBoxColor = function(s, color) EMCO.setTabBarColor(s, color) self:setTabBarColor(color) end
     emco.setTabBoxCSS = function(s, css) EMCO.setTabBoxCSS(s, css) self:setTabBarCSS(css) end
     emco.setActiveTabBGColor = function(s, color) self:setActiveTabBGColor(color) EMCO.setActiveTabBGColor(s, color) end
@@ -984,7 +984,7 @@ function Adjustable.TabWindow.convertEMCO(emco)
         activeTabStyle = emco.activeTabCSS,
         inactiveTabStyle = emco.inactiveTabCSS,
         tabBarHeight  = emco.tabHeight + 2,
-        gap = emco.gap,
+        gap = emco.gap - 2,
     },emco.container)
     emco.myTabWindow:setActiveTabFGColor(emco.activeTabFGColor)
     emco.myTabWindow:setInactiveTabFGColor(emco.inactiveTabFGColor)
