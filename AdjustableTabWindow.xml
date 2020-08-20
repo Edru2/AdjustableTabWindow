@@ -348,14 +348,32 @@ local function checkCollision(x1,y1,w1,h1, x2,y2,w2,h2)
     end
 end
 
+local function getFloatingWindows()
+local floatingWindows = {}
+  for k,v in pairs(Adjustable.TabWindow.allTabs) do
+    if v[k].floating then
+      floatingWindows[k] = v[k.."tab"]
+    end
+  end
+  return floatingWindows
+
+end
+
 -- checks if your tab collides with one of the tabwindows
 function Adjustable.TabWindow:checkMultiCollision(tab)
+    local floatingWindows = getFloatingWindows()
     local x1, y1, w1, h1 = tab:get_x(), tab:get_y(), tab:get_width(), tab:get_height()
+    for k,v in pairs(floatingWindows) do
+      local x2, y2, w2, h2 = v:get_x(), v:get_y(), v:get_width(), v:get_height()   
+      if checkCollision(x1,y1,w1,h1, x2,y2,w2,h2) and v.windowname == self.windowname and not(v.hidden or v.auto_hidden) then
+          return "floating", v
+      end
+    end  
     for k,v in pairs(Adjustable.TabWindow.all) do
         local x2, y2, w2, h2 = v:get_x(), v:get_y(), v:get_width(), v:get_height()
         
-        if checkCollision(x1,y1,w1,h1, x2,y2,w2,h2) and v.windowname == self.windowname then
-            return true, v
+        if checkCollision(x1,y1,w1,h1, x2,y2,w2,h2) and v.windowname == self.windowname and not(v.hidden or v.auto_hidden) then
+            return "TabWindow", v
         end
     end  
 end
@@ -365,25 +383,51 @@ end
 function Adjustable.TabWindow:onMove(tab, event)
     self[tab.."tab"]:onMove(self[tab.."tab"].adjLabel, event)
     self[tab.."tab"].adjLabel:echo(self[tab].tabText, nil, "c")
-    if self[tab].floating then
+    if self[tab].floating or not Adjustable.TabWindow.clicked then
         return
     end
-    if Adjustable.TabWindow.clicked then  
-        local result, value = self:checkMultiCollision(self[tab.."tab"])
-        if Adjustable.TabWindow.currentWindow and Adjustable.TabWindow.currentWindow ~= value then
-            -- reset the tab space
-            self:makeSpace(Adjustable.TabWindow.currentWindow, nil, true)
-        end
-        if result then
-            Adjustable.TabWindow.currentWindow = value
-            tab_pos = value:findPosition(self[tab.."tab"])
-            self:makeSpace(value, tab_pos)
-        else
-            if Adjustable.TabWindow.currentWindow then
-                Adjustable.TabWindow.currentWindow = nil
-            end
-        end
+    local result, value = self:checkMultiCollision(self[tab.."tab"])
+    if Adjustable.TabWindow.currentWindow and Adjustable.TabWindow.currentWindow ~= value then
+        -- reset the tab space
+        self:makeSpace(Adjustable.TabWindow.currentWindow, nil, true)
     end
+    if result == "TabWindow" then
+        Adjustable.TabWindow.currentWindow = value
+        tab_pos = value:findPosition(self[tab.."tab"])
+        self:makeSpace(value, tab_pos)
+        return
+    end
+    if result == "floating" then
+      print(value.adjLabel.name)
+    end        
+    if Adjustable.TabWindow.currentWindow then
+        Adjustable.TabWindow.currentWindow = nil
+    end
+end
+
+--- Transforms a floating Tab into a temporary TabWindow
+-- @tparam tab the tab which will be transformed
+function Adjustable.TabWindow:createTempWindow(tab)
+  tab.tempWindow = Adjustable.Container:new({
+  name = tab.name.."tempWindow",
+  titleText = "",
+  border = 0,
+  x = tab:get_x(), 
+  y = tab:get_y(), 
+  width = tab:get_width(), 
+  height = tab:get_height(), 
+  })
+  
+  tab.tempTabWindow = Adjustable.TabWindow:new({
+  name = tab.name.."tempTabWindow", 
+  x = 0, 
+  y = 0, 
+  width = "100%", 
+  height = "100%", 
+  },tab.tempWindow)
+  
+  self:restoreTab(tab.name, tab.tempTabWindow)
+  
 end
 
 -- mouse movement on the overlay label
@@ -486,6 +530,8 @@ end
 -- handles click event on tab
 function Adjustable.TabWindow:onClick(tab, event)
     Adjustable.TabWindow.currentWindow = self
+    Adjustable.TabWindow.clicked = true
+    Adjustable.TabWindow.clickedTab = self[tab.."tab"]
     if event.button == "LeftButton" and not self[tab].floating then
         self[tab.."tab"]:resize(self[tab.."tab"].get_width(),self[tab.."tab"].get_height())
         self[tab.."tab"].container = Geyser
@@ -800,18 +846,16 @@ function Adjustable.TabWindow:save()
     end
     -- save floating tabs and tabText
     for k,v in pairs(Adjustable.TabWindow.allTabs) do
-        for k1,v1 in pairs(v) do
-            if type(v1) == "table" and v1.floating then
-                -- save the tabs adjustable container settings
-                v[k1.."tab"]:save()
-                -- get all floating tabs and their windownames
-                mytable[v.name].floatingTabs = mytable[v.name].floatingTabs or {}
-                mytable[v.name].floatingTabs[k1] = "main"
-                if v1.windowname ~= "main" then
-                    mytable[v.name].floatingTabs[k1] = v1.windowname
-                end
-            end
+      if v[k].floating then
+      -- save the tabs adjustable container settings
+        v[k.."tab"]:save()
+        -- get all floating tabs and their windownames
+        mytable[v.name].floatingTabs = mytable[v.name].floatingTabs or {}
+        mytable[v.name].floatingTabs[k] = "main"
+        if v[k].windowname ~= "main" then
+          mytable[v.name].floatingTabs[k] = v[k].windowname
         end
+      end
     end
     if not(io.exists(getMudletHomeDir().."/AdjustableTabWindow/")) then lfs.mkdir(getMudletHomeDir().."/AdjustableTabWindow/") end
     table.save(getMudletHomeDir().."/AdjustableTabWindow/TabWindowTabs.lua", mytable)
