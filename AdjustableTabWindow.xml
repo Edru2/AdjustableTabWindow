@@ -142,7 +142,7 @@ function Adjustable.TabWindow:createTabs()
         end
         
         self[v.."tab"]:newCustomItem("Tabify", function() self:createTempWindow(self[v]) end)
-       
+        
         Adjustable.TabWindow.allTabs[v] = self
         
         self[v.."tab"].reposition = self.reposition
@@ -351,14 +351,14 @@ local function checkCollision(x1,y1,w1,h1, x2,y2,w2,h2)
 end
 
 local function getFloatingWindows()
-local floatingWindows = {}
-  for k,v in pairs(Adjustable.TabWindow.allTabs) do
-    if v[k].floating then
-      floatingWindows[k] = v[k.."tab"]
+    local floatingWindows = {}
+    for k,v in pairs(Adjustable.TabWindow.allTabs) do
+        if v[k].floating then
+            floatingWindows[k] = v[k.."tab"]
+        end
     end
-  end
-  return floatingWindows
-
+    return floatingWindows
+    
 end
 
 -- checks if your tab collides with one of the tabwindows
@@ -366,10 +366,10 @@ function Adjustable.TabWindow:checkMultiCollision(tab)
     local floatingWindows = getFloatingWindows()
     local x1, y1, w1, h1 = tab:get_x(), tab:get_y(), tab:get_width(), tab:get_height()
     for k,v in pairs(floatingWindows) do
-      local x2, y2, w2, h2 = v:get_x(), v:get_y(), v:get_width(), v:get_height()   
-      if checkCollision(x1,y1,w1,h1, x2,y2,w2,h2) and v.windowname == self.windowname and not(v.hidden or v.auto_hidden) and not (v == tab) then
-          return "floating", v
-      end
+        local x2, y2, w2, h2 = v:get_x(), v:get_y(), v:get_width(), v:get_height()   
+        if checkCollision(x1,y1,w1,h1, x2,y2,w2,h2) and v.windowname == self.windowname and not(v.hidden or v.auto_hidden) and not (v == tab) then
+            return "floating", v
+        end
     end  
     for k,v in pairs(Adjustable.TabWindow.all) do
         local x2, y2, w2, h2 = v:get_x(), v:get_y(), v:get_width(), v:get_height()
@@ -400,7 +400,7 @@ function Adjustable.TabWindow:onMove(tab, event)
         return
     end
     if result == "floating" then
-      --print(value.adjLabel.name)
+        --print(value.adjLabel.name)
     end        
     if Adjustable.TabWindow.currentWindow then
         Adjustable.TabWindow.currentWindow = nil
@@ -410,42 +410,70 @@ end
 --- Transforms a floating Tab into a temporary TabWindow
 -- @tparam tab the tab which will be transformed
 function Adjustable.TabWindow:createTempWindow(tab)
-  if not(tab.floating) then
-    return
-  end
-  local container = Adjustable.Container:new({
-  titleText = "",
-  x = tab:get_x(), 
-  y = tab:get_y(), 
-  width = tab:get_width(), 
-  height = tab:get_height(),
-  autoSave = false,
-  autoLoad = false,
-  buttonsize = "12",
-  buttonFontSize = "7",
-  padding = 9,
-  buttonstyle = [[
-    QLabel{ border-radius: 4px; background-color: rgba(80,80,80,80%);}
-    QLabel::hover{ background-color: rgba(60,60,60,50%);}
-    ]],
-  adjLabelstyle = [[background-color: rgba(0,0,0,90%); border: 2px solid rgb(50,50,50);]]
-  })
-  
-  container:setPercent(true, true)
-  table.remove(Adjustable.Container.all_windows, table.index_of(Adjustable.Container.all_windows, container ))
-  Adjustable.Container.all[container] = nil
-  
-  tab.tempTabWindow = Adjustable.TabWindow:new({
-  x = 0, 
-  y = 0, 
-  width = "100%", 
-  height = "100%",
-  tabBarHeight ="30",
-  temporary = true 
-  },container) 
-  self:restoreTab(tab.name, tab.tempTabWindow)
-  container:show()
-  tab.tempWindow = container
+    if not(tab.floating) then
+        return
+    end
+    local rnd_nr = 1
+    for i=1,#Adjustable.TabWindow.all_windows do
+      if not Adjustable.TabWindow.all["tempTabWindow"..i] then
+        rnd_nr = i
+        break
+      end
+    end
+    local window = tab.windowname ~= "main" and Geyser.windowList[tab.windowname.."Container"].windowList[tab.windowname] or Geyser
+    local container = Adjustable.Container:new({
+        name="tempWindow"..rnd_nr,
+        titleText = "",
+        x = tab:get_x(), 
+        y = tab:get_y(), 
+        width = tab:get_width(), 
+        height = tab:get_height(),
+        autoSave = false,
+        autoLoad = false,
+        buttonsize = "12",
+        buttonFontSize = "7",
+        padding = 9,
+        buttonstyle = [[
+        QLabel{ border-radius: 4px; background-color: rgba(80,80,80,80%);}
+        QLabel::hover{ background-color: rgba(60,60,60,50%);}
+        ]],
+        adjLabelstyle = [[background-color: rgba(0,0,0,90%); border: 2px solid rgb(50,50,50);]]
+    }, window)
+    
+    container:setPercent(true, true)
+    table.remove(Adjustable.Container.all_windows, table.index_of(Adjustable.Container.all_windows, container ))
+    Adjustable.Container.all[container] = nil
+    
+    tab.tempTabWindow = Adjustable.TabWindow:new({
+        name="tempTabWindow"..rnd_nr,
+        x = 0, 
+        y = 0, 
+        width = "100%", 
+        height = "100%",
+        tabTxtColor 		= self.tabTxtColor,
+        tabPadding 		    = self.tabPadding,
+        activeTabFGColor 	= self.activeTabFGColor,
+        inactiveTabFGColor 	= self.inactiveTabFGColor, 
+        activeTabBGColor 	= self.activeTabBGColor, 
+        inactiveTabBGColor 	= self.inactiveTabBGColor, 
+        tabBarColor 		= self.tabBarColor,    
+        tabBarStyle 		= self.tabBarStyle, 
+        color1 			    = self.color1, 
+        color2 			    = self.color2, 
+        tabBarHeight 		= self.tabBarHeight, 
+        footerStyle 		= self.footerStyle, 
+        centerStyle 		= self.centerStyle,
+        containerStyle 		= self.containerStyle, 
+        inactiveTabStyle 	= self.inactiveTabStyle, 
+        activeTabStyle 		= self.activeTabStyle, 
+        chosenTabStyle 		= self.chosenTabStyle,  
+        overlayStyle 		= self.overlayStyle,  
+        gap 		 	    = self.gap, 
+        temporary = true 
+    },container) 
+    self:restoreTab(tab.name, tab.tempTabWindow)
+    container:show()
+    tab.tempWindow = container
 end
 
 -- mouse movement on the overlay label
@@ -521,7 +549,7 @@ end
 function Adjustable.TabWindow:onMinimizeClick(tab)  
     local result, value = self:checkMultiCollision(self[tab.."tab"])
     if result == "floating" then
-      value = nil
+        value = nil
     end
     self:restoreTab(tab, value)
 end
@@ -714,7 +742,7 @@ function Adjustable.TabWindow:changeTabContainer(tab, myWindow, position)
         myWindow:createTabs()
         myWindow[tab.."tab"]:show()
         if not(myWindow.hidden or myWindow.auto_hidden) then
-          myWindow:show()
+            myWindow:show()
         end
     end
     myWindow:addTab(tab, position)
@@ -801,16 +829,16 @@ function Adjustable.TabWindow:removeTab(which)
         table.remove(self.tabs, index)
         self:activateTab(self.tabs[1])
         if self.temporary then
-          if table.is_empty(self.tabs) then
-            Adjustable.TabWindow.all[self.name] = nil
-            table.remove(Adjustable.TabWindow.all_windows, table.index_of(Adjustable.TabWindow.all_windows, self))
-            self[tabname].tempWindow:hide()
-          else
-            self[self.tabs[1]].tempWindow = self.container.container
-            self[self.tabs[1]].tempTabWindow = self
-          end
-          self[tabname].tempWindow = nil
-          self[tabname].tempTabWindow = nil
+            if table.is_empty(self.tabs) then
+                Adjustable.TabWindow.all[self.name] = nil
+                table.remove(Adjustable.TabWindow.all_windows, table.index_of(Adjustable.TabWindow.all_windows, self))
+                self[tabname].tempWindow:hide()
+            else
+                self[self.tabs[1]].tempWindow = self.container.container
+                self[self.tabs[1]].tempTabWindow = self
+            end
+            self[tabname].tempWindow = nil
+            self[tabname].tempTabWindow = nil
         end
         return true
     end
@@ -878,16 +906,16 @@ function Adjustable.TabWindow:save()
         mytable[k] = {}
         mytable[k].tabs = v.tabs
         mytable[k].current = v.current
-      if v[k].floating then
-      -- save the tabs adjustable container settings
-        v[k.."tab"]:save()
-        -- get all floating tabs and their windownames
-        mytable[v.name].floatingTabs = mytable[v.name].floatingTabs or {}
-        mytable[v.name].floatingTabs[k] = "main"
-        if v[k].windowname ~= "main" then
-          mytable[v.name].floatingTabs[k] = v[k].windowname
+        if v[k].floating then
+            -- save the tabs adjustable container settings
+            v[k.."tab"]:save()
+            -- get all floating tabs and their windownames
+            mytable[v.name].floatingTabs = mytable[v.name].floatingTabs or {}
+            mytable[v.name].floatingTabs[k] = "main"
+            if v[k].windowname ~= "main" then
+                mytable[v.name].floatingTabs[k] = v[k].windowname
+            end
         end
-      end
     end
     if not(io.exists(getMudletHomeDir().."/AdjustableTabWindow/")) then lfs.mkdir(getMudletHomeDir().."/AdjustableTabWindow/") end
     table.save(getMudletHomeDir().."/AdjustableTabWindow/TabWindowTabs.lua", mytable)
@@ -1189,7 +1217,7 @@ function Adjustable.TabWindow:new(cons, container)
     end )
     
     if not Adjustable.TabWindow.all[me.name] then
-        Adjustable.TabWindow.all_windows[#Adjustable.Container.all_windows + 1] = me.name
+        Adjustable.TabWindow.all_windows[#Adjustable.TabWindow.all_windows + 1] = me.name
     end
     Adjustable.TabWindow.all[me.name] = me
     
