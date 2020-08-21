@@ -365,7 +365,7 @@ function Adjustable.TabWindow:checkMultiCollision(tab)
     local x1, y1, w1, h1 = tab:get_x(), tab:get_y(), tab:get_width(), tab:get_height()
     for k,v in pairs(floatingWindows) do
       local x2, y2, w2, h2 = v:get_x(), v:get_y(), v:get_width(), v:get_height()   
-      if checkCollision(x1,y1,w1,h1, x2,y2,w2,h2) and v.windowname == self.windowname and not(v.hidden or v.auto_hidden) then
+      if checkCollision(x1,y1,w1,h1, x2,y2,w2,h2) and v.windowname == self.windowname and not(v.hidden or v.auto_hidden) and not (v == tab) then
           return "floating", v
       end
     end  
@@ -408,10 +408,12 @@ end
 --- Transforms a floating Tab into a temporary TabWindow
 -- @tparam tab the tab which will be transformed
 function Adjustable.TabWindow:createTempWindow(tab)
+  if not(tab.floating) then
+    return
+  end
   tab.tempWindow = Adjustable.Container:new({
   name = tab.name.."tempWindow",
   titleText = "",
-  border = 0,
   x = tab:get_x(), 
   y = tab:get_y(), 
   width = tab:get_width(), 
@@ -423,11 +425,11 @@ function Adjustable.TabWindow:createTempWindow(tab)
   x = 0, 
   y = 0, 
   width = "100%", 
-  height = "100%", 
+  height = "100%",
+  temporary = true 
   },tab.tempWindow)
   
   self:restoreTab(tab.name, tab.tempTabWindow)
-  
 end
 
 -- mouse movement on the overlay label
@@ -502,6 +504,9 @@ end
 -- restored to be in a tabwindow again
 function Adjustable.TabWindow:onMinimizeClick(tab)  
     local result, value = self:checkMultiCollision(self[tab.."tab"])
+    if result == "floating" then
+      value = nil
+    end
     self:restoreTab(tab, value)
 end
 
@@ -691,6 +696,9 @@ function Adjustable.TabWindow:changeTabContainer(tab, myWindow, position)
         end
         myWindow:createTabs()
         myWindow[tab.."tab"]:show()
+        if not(myWindow.hidden or myWindow.auto_hidden) then
+          myWindow:show()
+        end
     end
     myWindow:addTab(tab, position)
     if self.current then
@@ -762,21 +770,24 @@ end
 -- removes a tab (this won't be saved)
 function Adjustable.TabWindow:removeTab(which)
     assert(type(which) == "string" or type(which) == "number", "removeTab: bad argument #1 type (tab name/position as string or number expected, got "..type(which).."!)")
+    local index
     if type(which) == "number" and which &lt;= #self.tabs then
-        self[self.tabs[which].."tab"]:hide()
-        self.header:remove(self[self.tabs[which].."tab"])
-        self.header:organize()
-        table.remove(self.tabs, which)
-        self:activateTab(self.tabs[1])
-        return true
+        index = which
+    else
+        index = table.index_of(self.tabs, which)
     end
-    local index = table.index_of(self.tabs, which)
     if index then
         self[self.tabs[index].."tab"]:hide()
         self.header:remove(self[self.tabs[index].."tab"])
         self.header:organize()
         table.remove(self.tabs, index)
         self:activateTab(self.tabs[1])
+        if table.is_empty(self.tabs) and self.temporary then
+          Adjustable.TabWindow.all[self.name] = nil
+          table.remove(Adjustable.TabWindow.all_windows, table.index_of(Adjustable.TabWindow.all_windows, self))
+          self:hide()
+          self = nil
+        end
         return true
     end
     return nil, "removeTab: Couldn't find tab to remove"
