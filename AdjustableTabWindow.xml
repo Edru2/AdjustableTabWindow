@@ -141,6 +141,8 @@ function Adjustable.TabWindow:createTabs()
             self[v.."tab"].adjLabel:echo(self[v].tabText, nil, "c")
         end
         
+        self[v.."tab"]:newCustomItem("Tabify", function() self:createTempWindow(self[v]) end)
+       
         Adjustable.TabWindow.allTabs[v] = self
         
         self[v.."tab"].reposition = self.reposition
@@ -398,7 +400,7 @@ function Adjustable.TabWindow:onMove(tab, event)
         return
     end
     if result == "floating" then
-      print(value.adjLabel.name)
+      --print(value.adjLabel.name)
     end        
     if Adjustable.TabWindow.currentWindow then
         Adjustable.TabWindow.currentWindow = nil
@@ -411,25 +413,39 @@ function Adjustable.TabWindow:createTempWindow(tab)
   if not(tab.floating) then
     return
   end
-  tab.tempWindow = Adjustable.Container:new({
-  name = tab.name.."tempWindow",
+  local container = Adjustable.Container:new({
   titleText = "",
   x = tab:get_x(), 
   y = tab:get_y(), 
   width = tab:get_width(), 
-  height = tab:get_height(), 
+  height = tab:get_height(),
+  autoSave = false,
+  autoLoad = false,
+  buttonsize = "12",
+  buttonFontSize = "7",
+  padding = 9,
+  buttonstyle = [[
+    QLabel{ border-radius: 4px; background-color: rgba(80,80,80,80%);}
+    QLabel::hover{ background-color: rgba(60,60,60,50%);}
+    ]],
+  adjLabelstyle = [[background-color: rgba(0,0,0,90%); border: 2px solid rgb(50,50,50);]]
   })
   
+  container:setPercent(true, true)
+  table.remove(Adjustable.Container.all_windows, table.index_of(Adjustable.Container.all_windows, container ))
+  Adjustable.Container.all[container] = nil
+  
   tab.tempTabWindow = Adjustable.TabWindow:new({
-  name = tab.name.."tempTabWindow", 
   x = 0, 
   y = 0, 
   width = "100%", 
   height = "100%",
+  tabBarHeight ="30",
   temporary = true 
-  },tab.tempWindow)
-  
+  },container) 
   self:restoreTab(tab.name, tab.tempTabWindow)
+  container:show()
+  tab.tempWindow = container
 end
 
 -- mouse movement on the overlay label
@@ -647,6 +663,7 @@ function Adjustable.TabWindow:restoreTab(tab, myWindow)
     self:changeTabContainer(tab, myWindow)
     self[tab].floating = false
     container.raiseOnClick = false
+    tempTimer(0, function() myWindow:activateTab(tab) end)
 end
 
 -- function to make a gap where the tab can be dropped in
@@ -777,16 +794,23 @@ function Adjustable.TabWindow:removeTab(which)
         index = table.index_of(self.tabs, which)
     end
     if index then
-        self[self.tabs[index].."tab"]:hide()
-        self.header:remove(self[self.tabs[index].."tab"])
+        local tabname = self.tabs[index]
+        self[tabname.."tab"]:hide()
+        self.header:remove(self[tabname.."tab"])
         self.header:organize()
         table.remove(self.tabs, index)
         self:activateTab(self.tabs[1])
-        if table.is_empty(self.tabs) and self.temporary then
-          Adjustable.TabWindow.all[self.name] = nil
-          table.remove(Adjustable.TabWindow.all_windows, table.index_of(Adjustable.TabWindow.all_windows, self))
-          self:hide()
-          self = nil
+        if self.temporary then
+          if table.is_empty(self.tabs) then
+            Adjustable.TabWindow.all[self.name] = nil
+            table.remove(Adjustable.TabWindow.all_windows, table.index_of(Adjustable.TabWindow.all_windows, self))
+            self[tabname].tempWindow:hide()
+          else
+            self[self.tabs[1]].tempWindow = self.container.container
+            self[self.tabs[1]].tempTabWindow = self
+          end
+          self[tabname].tempWindow = nil
+          self[tabname].tempTabWindow = nil
         end
         return true
     end
@@ -854,9 +878,6 @@ function Adjustable.TabWindow:save()
         mytable[k] = {}
         mytable[k].tabs = v.tabs
         mytable[k].current = v.current
-    end
-    -- save floating tabs and tabText
-    for k,v in pairs(Adjustable.TabWindow.allTabs) do
       if v[k].floating then
       -- save the tabs adjustable container settings
         v[k.."tab"]:save()
