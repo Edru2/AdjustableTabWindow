@@ -411,7 +411,7 @@ end
 --- Transforms a floating Tab into a temporary TabWindow
 -- @tparam tab the tab which will be transformed
 function Adjustable.TabWindow:createTempWindow(tab, tempName)
-    if not(tab.floating) then
+    if tab and not(tab.floating) then
         return
     end
     
@@ -422,29 +422,32 @@ function Adjustable.TabWindow:createTempWindow(tab, tempName)
         break
       end
     end
-    local window = tab.windowname ~= "main" and Geyser.windowList[tab.windowname.."Container"].windowList[tab.windowname] or Geyser
-        
-    local tempWindowName = tempName and "tempWindow"..string:match(tempName,"%d+") or "tempWindow"..rnd_nr
+
+    local window = tab and tab.windowname ~= "main" and Geyser.windowList[tab.windowname.."Container"].windowList[tab.windowname] or Geyser
+    local tempWindowName = tempName and "tempWindow"..string.match(tempName,"%d+") or "tempWindow"..rnd_nr
     local tempTabWindowName = tempName or "tempTabWindow"..rnd_nr
-    
+    local x, y, width, height = 0,0,100,100
+    if tab then
+      x, y, width, height = self[tab.name.."tab"]:get_x(), self[tab.name.."tab"]:get_y(), self[tab.name.."tab"]:get_width(), self[tab.name.."tab"]:get_height()
+    end
     local tempWindowConf = { name = tempWindowName,
         titleText = "",
-        x = tab.container.container:get_x(), 
-        y = tab.container.container:get_y(), 
-        width = tab.container:get_width(), 
-        height = tab.container:get_height(),
+        x = x,
+        y = y, 
+        width = width, 
+        height = height,
         autoSave = false,
         autoLoad = false,
         }
-    tempWindowConf = table.union(tempWindowConf,self.tempWindowConf)
+    tempWindowConf = table.union(tempWindowConf, self.tempWindowConf)
     
-    local container = Adjustable.Container:new(tempWindowConf, window)    
-    container:setPercent(true, true)
-    container:changeContainer(window)
-    table.remove(Adjustable.Container.all_windows, table.index_of(Adjustable.Container.all_windows, container ))
-    Adjustable.Container.all[container] = nil
+    local windowCont = Adjustable.Container:new(tempWindowConf)
+    windowCont:move(x, y)
+    windowCont:resize(width, height)
+    table.remove(Adjustable.Container.all_windows, table.index_of(Adjustable.Container.all_windows, windowCont.name ))
+    Adjustable.Container.all[windowCont.name] = nil
     
-    tab.tempTabWindow = Adjustable.TabWindow:new({
+    local tabWindow = Adjustable.TabWindow:new({
         name = tempTabWindowName,
         x = 0, 
         y = 0, 
@@ -470,12 +473,19 @@ function Adjustable.TabWindow:createTempWindow(tab, tempName)
         overlayStyle 		= self.overlayStyle,  
         gap 		 	    = self.gap, 
         temporary = true 
-    },container) 
+    }, windowCont) 
+    
     --save name to get the style on loading
-    tab.tempTabWindow.tempStyle = self.name 
-    self:restoreTab(tab.name, tab.tempTabWindow)
-    container:show()
-    tab.tempWindow = container
+    tabWindow.tempStyle = self.name 
+    if tab then
+      self:restoreTab(tab.name, tabWindow)
+      tab.tempWindow = windowCont
+      tab.tempTabWindow = tabWindow
+      tab.tempWindow:changeContainer(window)
+      tab.tempWindow:setPercent(true, true)
+    end
+    windowCont:show()
+    return windowCont
 end
 
 -- mouse movement on the overlay label
@@ -630,6 +640,7 @@ function Adjustable.TabWindow.onMouseClick( event, button, x, y, windowname )
     local tab = Adjustable.TabWindow.clickedTab
     local container = Adjustable.TabWindow.clickedTab.container.container.container
     container:transformTabContainer(tab.tabname)
+    local width, height = tab:get_width(), tab:get_height()
     local newContainer
     if windowname == "main" then
         newContainer = Geyser
@@ -639,6 +650,8 @@ function Adjustable.TabWindow.onMouseClick( event, button, x, y, windowname )
     tab:changeContainer(newContainer)
     tab:raiseAll()
     tab:move(x,y)
+    tab:resize(width, height)
+    tab:setPercent(true,true)
     killAnonymousEventHandler(Adjustable.TabWindow.MouseEventID)
     Adjustable.TabWindow.MouseEventID = nil
     resetOverlay()
@@ -833,11 +846,11 @@ function Adjustable.TabWindow:removeTab(which)
         if self.temporary then
             -- destroy empty tempTabWindow
             if table.is_empty(self.tabs) then
-                self:changeContainer("main")
+                self[tabname].tempWindow:changeContainer("main")
                 Adjustable.TabWindow.all[self.name] = nil
                 table.remove(Adjustable.TabWindow.all_windows, table.index_of(Adjustable.TabWindow.all_windows, self))
                 self[tabname].tempWindow:hide()
-                -- delete all references to this tab to avoid it being sent to nirvana if restored
+                -- delete all references to this tab to avoid it being sent to nirwana if restored
                 for k,v in pairs (Adjustable.TabWindow.allTabs) do
                   if v.name == self.name then
                     Adjustable.TabWindow.allTabs[k] = v[k].origin
@@ -845,9 +858,6 @@ function Adjustable.TabWindow:removeTab(which)
                     v[k].origin[k.."tab"].minLabel:setClickCallback(function() v[k].origin:onMinimizeClick(k) end)
                   end
                 end
-            else
-                self[self.tabs[1]].tempWindow = self.container.container
-                self[self.tabs[1]].tempTabWindow = self
             end
             self[tabname].tempWindow = nil
             self[tabname].tempTabWindow = nil
@@ -904,6 +914,10 @@ function Adjustable.TabWindow:addTab(name, pos)
     self[name.."tab"]:show()
     self.header:organize()
     self:activateTab(name)
+    if self.temporary then
+      self[name].tempWindow = self.container.container
+      self[name].tempTabWindow = self
+    end
     return true
 end
 
@@ -935,6 +949,7 @@ function Adjustable.TabWindow:save()
         --save tempWindow adjustable container settings
         if v[k].tempWindow then
            v[k].tempWindow:save()
+           mytable[v.name].windowname = v[k].tempWindow.windowname
            --save window where tempStyle came from
            mytable[v.name].tempStyle = v[k].tempTabWindow.tempStyle
         end
@@ -954,12 +969,15 @@ function Adjustable.TabWindow:load()
     end
     -- create TempWindows and TempTabWindows
     for k,v in pairs (mytable) do
-        if v.temporary then
+        if v.temporary and not Adjustable.TabWindow.all[k] then
+          if not Adjustable.TabWindow.all[k] then
             local tempStyleWindow = Adjustable.TabWindow.all[v.tempStyle]
-            local tempStyleTab = tempStyleWindow[tempStyleWindow.tabs[1]]
-            tempStyleWindow:transformTabContainer(tempStyleTab.name)
-            tempStyleWindow:createTempWindow(tempStyleTab, v.name)
-            tempStyleTab.tempWindow:load()
+            local tempTabWindow = tempStyleWindow:createTempWindow(nil, k)
+          end
+            Adjustable.TabWindow.all[k].container.container:load()
+            if v.windowname ~= "main" then
+              Adjustable.TabWindow.all[k].container.container:changeContainer(Geyser.windowList[v.windowname.."Container"].windowList[v.windowname])
+            end
         end
     end
     for k,v in pairs(mytable) do
