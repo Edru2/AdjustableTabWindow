@@ -144,6 +144,7 @@ function Adjustable.TabWindow:createTabs()
         self[v.."tab"]:newCustomItem("Tabify", function() self:createTempWindow(self[v]) end)
         
         Adjustable.TabWindow.allTabs[v] = self
+        self[v].origin = self[v].origin or self
         
         self[v.."tab"].reposition = self.reposition
         table.remove(Adjustable.Container.all_windows, table.index_of(Adjustable.Container.all_windows, v.."tab"))
@@ -409,43 +410,42 @@ end
 
 --- Transforms a floating Tab into a temporary TabWindow
 -- @tparam tab the tab which will be transformed
-function Adjustable.TabWindow:createTempWindow(tab)
+function Adjustable.TabWindow:createTempWindow(tab, tempName)
     if not(tab.floating) then
         return
     end
-    local rnd_nr = 1
-    for i=1,#Adjustable.TabWindow.all_windows do
+    
+    local rnd_nr = 0
+    for i=0,#Adjustable.TabWindow.all_windows do
       if not Adjustable.TabWindow.all["tempTabWindow"..i] then
         rnd_nr = i
         break
       end
     end
     local window = tab.windowname ~= "main" and Geyser.windowList[tab.windowname.."Container"].windowList[tab.windowname] or Geyser
-    local container = Adjustable.Container:new({
-        name="tempWindow"..rnd_nr,
+        
+    local tempWindowName = tempName and "tempWindow"..string:match(tempName,"%d+") or "tempWindow"..rnd_nr
+    local tempTabWindowName = tempName or "tempTabWindow"..rnd_nr
+    
+    local tempWindowConf = { name = tempWindowName,
         titleText = "",
-        x = tab:get_x(), 
-        y = tab:get_y(), 
-        width = tab:get_width(), 
-        height = tab:get_height(),
+        x = tab.container.container:get_x(), 
+        y = tab.container.container:get_y(), 
+        width = tab.container:get_width(), 
+        height = tab.container:get_height(),
         autoSave = false,
         autoLoad = false,
-        buttonsize = "12",
-        buttonFontSize = "7",
-        padding = 9,
-        buttonstyle = [[
-        QLabel{ border-radius: 4px; background-color: rgba(80,80,80,80%);}
-        QLabel::hover{ background-color: rgba(60,60,60,50%);}
-        ]],
-        adjLabelstyle = [[background-color: rgba(0,0,0,90%); border: 2px solid rgb(50,50,50);]]
-    }, window)
+        }
+    tempWindowConf = table.union(tempWindowConf,self.tempWindowConf)
     
+    local container = Adjustable.Container:new(tempWindowConf, window)    
     container:setPercent(true, true)
+    container:changeContainer(window)
     table.remove(Adjustable.Container.all_windows, table.index_of(Adjustable.Container.all_windows, container ))
     Adjustable.Container.all[container] = nil
     
     tab.tempTabWindow = Adjustable.TabWindow:new({
-        name="tempTabWindow"..rnd_nr,
+        name = tempTabWindowName,
         x = 0, 
         y = 0, 
         width = "100%", 
@@ -471,6 +471,8 @@ function Adjustable.TabWindow:createTempWindow(tab)
         gap 		 	    = self.gap, 
         temporary = true 
     },container) 
+    --save name to get the style on loading
+    tab.tempTabWindow.tempStyle = self.name 
     self:restoreTab(tab.name, tab.tempTabWindow)
     container:show()
     tab.tempWindow = container
@@ -829,10 +831,20 @@ function Adjustable.TabWindow:removeTab(which)
         table.remove(self.tabs, index)
         self:activateTab(self.tabs[1])
         if self.temporary then
+            -- destroy empty tempTabWindow
             if table.is_empty(self.tabs) then
+                self:changeContainer("main")
                 Adjustable.TabWindow.all[self.name] = nil
                 table.remove(Adjustable.TabWindow.all_windows, table.index_of(Adjustable.TabWindow.all_windows, self))
                 self[tabname].tempWindow:hide()
+                -- delete all references to this tab to avoid it being sent to nirvana if restored
+                for k,v in pairs (Adjustable.TabWindow.allTabs) do
+                  if v.name == self.name then
+                    Adjustable.TabWindow.allTabs[k] = v[k].origin
+                    v[k].origin[k.."tab"].minimizeLabel:setClickCallback(function() v[k].origin:onMinimizeClick(k) end)
+                    v[k].origin[k.."tab"].minLabel:setClickCallback(function() v[k].origin:onMinimizeClick(k) end)
+                  end
+                end
             else
                 self[self.tabs[1]].tempWindow = self.container.container
                 self[self.tabs[1]].tempTabWindow = self
@@ -906,15 +918,25 @@ function Adjustable.TabWindow:save()
         mytable[k] = {}
         mytable[k].tabs = v.tabs
         mytable[k].current = v.current
+        mytable[k].temporary = v.temporary
+    end
+    -- save floating tabs and tempTabWindows
+    for k,v in pairs(Adjustable.TabWindow.allTabs) do
         if v[k].floating then
             -- save the tabs adjustable container settings
             v[k.."tab"]:save()
             -- get all floating tabs and their windownames
-            mytable[v.name].floatingTabs = mytable[v.name].floatingTabs or {}
+            mytable[v.name].floatingTabs = {}
             mytable[v.name].floatingTabs[k] = "main"
             if v[k].windowname ~= "main" then
                 mytable[v.name].floatingTabs[k] = v[k].windowname
             end
+        end
+        --save tempWindow adjustable container settings
+        if v[k].tempWindow then
+           v[k].tempWindow:save()
+           --save window where tempStyle came from
+           mytable[v.name].tempStyle = v[k].tempTabWindow.tempStyle
         end
     end
     if not(io.exists(getMudletHomeDir().."/AdjustableTabWindow/")) then lfs.mkdir(getMudletHomeDir().."/AdjustableTabWindow/") end
@@ -929,6 +951,16 @@ function Adjustable.TabWindow:load()
     local mytable = {}
     if io.exists(getMudletHomeDir().."/AdjustableTabWindow/TabWindowTabs.lua") then
         table.load(getMudletHomeDir().."/AdjustableTabWindow/TabWindowTabs.lua", mytable)
+    end
+    -- create TempWindows and TempTabWindows
+    for k,v in pairs (mytable) do
+        if v.temporary then
+            local tempStyleWindow = Adjustable.TabWindow.all[v.tempStyle]
+            local tempStyleTab = tempStyleWindow[tempStyleWindow.tabs[1]]
+            tempStyleWindow:transformTabContainer(tempStyleTab.name)
+            tempStyleWindow:createTempWindow(tempStyleTab, v.name)
+            tempStyleTab.tempWindow:load()
+        end
     end
     for k,v in pairs(mytable) do
         -- load fixed Tabs
@@ -1195,6 +1227,18 @@ function Adjustable.TabWindow:new(cons, container)
     me.tabBarStyle = me.tabBarStyle or [[
     background-color: rgba(0,0,0,0%);
     ]]
+    
+    me.tempWindowConf = me.tempWindowConf or 
+    {
+    buttonsize = "12",
+    buttonFontSize = "7",
+    padding = 9,
+    buttonstyle = [[
+    QLabel{ border-radius: 4px; background-color: rgba(80,80,80,80%);}
+    QLabel::hover{ background-color: rgba(60,60,60,50%);}
+    ]],
+    adjLabelstyle = [[background-color: rgba(0,0,0,90%); border: 2px solid rgb(50,50,50);]]
+    }
     
     me:createBaseContainers()
     me:createTabs()
