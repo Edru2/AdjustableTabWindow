@@ -400,9 +400,10 @@ function Adjustable.TabWindow:onMove(tab, event)
         self:makeSpace(value, tab_pos)
         return
     end
-    if result == "floating" then
-        --print(value.adjLabel.name)
-    end        
+    if result == "floating" and not(value.locked) then
+      Adjustable.TabWindow.currentWindow = value
+      return
+    end    
     if Adjustable.TabWindow.currentWindow then
         Adjustable.TabWindow.currentWindow = nil
     end
@@ -485,6 +486,7 @@ function Adjustable.TabWindow:createTempWindow(tab, tempName)
       tab.tempWindow:setPercent(true, true)
     end
     windowCont:show()
+    windowCont.tabWindow = tabWindow
     return windowCont
 end
 
@@ -778,7 +780,7 @@ end
 function Adjustable.TabWindow:onRelease(tab, event, position)
     local myWindow = Adjustable.TabWindow.currentWindow or self
     local floating = self[tab].floating
-    if event.button == "LeftButton" and Adjustable.TabWindow.currentWindow and not floating then
+    if event.button == "LeftButton" and Adjustable.TabWindow.currentWindow and myWindow.type == "adjustabletabwindow" and not floating then
         self[tab.."tab"]:lockContainer()
         self[tab.."tab"].container = self.header
         self[tab.."tab"]:onRelease(self[tab.."tab"].adjLabel, event)
@@ -789,6 +791,15 @@ function Adjustable.TabWindow:onRelease(tab, event, position)
         end  
         myWindow:addTab(tab, tab_pos)
         myWindow:raiseAll()
+    end
+    
+    if event.button == "LeftButton" and myWindow.tabname then
+      local tabname = myWindow.tabname
+      local tabwindow = Adjustable.TabWindow.allTabs[tabname]
+      local mytab = tabwindow[tabname]
+      local tempWindow = tabwindow:createTempWindow(mytab)
+      self:changeTabContainer(tab, tempWindow.tabWindow)
+      tempWindow:raiseAll()
     end
     
     if event.button == "LeftButton" and not(Adjustable.TabWindow.currentWindow) and not floating then
@@ -946,8 +957,8 @@ function Adjustable.TabWindow:save()
                 mytable[v.name].floatingTabs[k] = v[k].windowname
             end
         end
-        --save tempWindow adjustable container settings
         if v[k].tempWindow then
+        --save tempWindow adjustable container settings
            v[k].tempWindow:save()
            mytable[v.name].windowname = v[k].tempWindow.windowname
            --save window where tempStyle came from
@@ -969,10 +980,10 @@ function Adjustable.TabWindow:load()
     end
     -- create TempWindows and TempTabWindows
     for k,v in pairs (mytable) do
-        if v.temporary and not Adjustable.TabWindow.all[k] then
+        if v.temporary then
           if not Adjustable.TabWindow.all[k] then
             local tempStyleWindow = Adjustable.TabWindow.all[v.tempStyle]
-            local tempTabWindow = tempStyleWindow:createTempWindow(nil, k)
+            tempStyleWindow:createTempWindow(nil, k)
           end
             Adjustable.TabWindow.all[k].container.container:load()
             if v.windowname ~= "main" then
