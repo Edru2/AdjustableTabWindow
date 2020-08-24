@@ -104,21 +104,23 @@ end
 -- function to create new tabs in tabs table or to rewrite/readjust them
 function Adjustable.TabWindow:createTabs()
     for k,v in ipairs(self.tabs) do
-        self[v] = self[v] or Geyser.Label:new({
-            name = v,
+        self[v.."center"] = self[v.."center"] or Geyser.Label:new({
+            name = v.."center",
             x = 0, y = 0,
             width = "100%",
             height = "100%",
         },self.footer)
         
-        self[v]:setStyleSheet(self.containerStyle)
-        self[v].tabText = self[v].tabText or v
+        self[v.."center"]:setStyleSheet(self.centerStyle)
         
-        self[v.."tab"] = self[v.."tab"] or Adjustable.Container:new({
-            name = v.."tab",
-            tabname = v,
+        local tabText = self[v] and self[v].tabText or v
+
+        self[v] = self[v] or Adjustable.Container:new({
+            name = v,
+            origin = self,
             noLimit = true,
-            titleText = self[v].tabText,
+            tabText = tabText,
+            titleText = tabText,
             padding = 0,
             locked = true,
             autoSave = false,
@@ -127,51 +129,40 @@ function Adjustable.TabWindow:createTabs()
             adjLabelstyle = self.inactiveTabStyle,
             titleTxtColor = self.tabTxtColor
         }, self.header)
-        self[v.."tab"].adjLabel.echo = noColorEcho
-        self[v.."tab"]:newLockStyle("tab", 
+        self[v].adjLabel.echo = noColorEcho
+        self[v]:newLockStyle("tab", 
         function(self)         
             self.Inside:resize("-"..self.padding,"-"..self.padding)
             self.Inside:move(self.padding, self.padding*2) 
         end)
         
-        self[v.."tab"].lockStyle = "tab"
+        self[v].lockStyle = "tab"
         
-        self[v.."tab"].unlockContainer = function()
-            Adjustable.Container.unlockContainer(self[v.."tab"])
-            self[v.."tab"].adjLabel:echo(self[v].tabText, nil, "c")
+        self[v].unlockContainer = function()
+            Adjustable.Container.unlockContainer(self[v])
+            self[v].adjLabel:echo(self[v].tabText, nil, "c")
         end
         
-        self[v.."tab"]:newCustomItem("Tabify", function() self:createTempWindow(self[v]) end)
+        self[v]:newCustomItem("Tabify", function() self:createTempWindow(self[v]) end)
         
         Adjustable.TabWindow.allTabs[v] = self
-        self[v].origin = self[v].origin or self
         
-        self[v.."tab"].reposition = self.reposition
-        table.remove(Adjustable.Container.all_windows, table.index_of(Adjustable.Container.all_windows, v.."tab"))
-        Adjustable.Container.all[v.."tab"] = nil
-        self[v.."tab"].adjLabelstyle = self.inactiveTabStyle
-        self[v.."tab"].titleTxtColor = self.tabTxtColor
-        self[v.."tab"].adjLabel:setStyleSheet(self.inactiveTabStyle)
+        self[v].reposition = self.reposition
+        table.remove(Adjustable.Container.all_windows, table.index_of(Adjustable.Container.all_windows, v))
+        Adjustable.Container.all[v] = nil
+        self[v].adjLabelstyle = self.inactiveTabStyle
+        self[v].titleTxtColor = self.tabTxtColor
+        self[v].adjLabel:setStyleSheet(self.inactiveTabStyle)
         
-        self[v.."tab"].adjLabel:echo(self[v].tabText, nil, "c")
-        self[v.."tab"].adjLabel:setClickCallback(function(event) self:onClick(v, event) end)
-        self[v.."tab"].adjLabel:setReleaseCallback(function(event) self:onRelease(v, event) end)
-        self[v.."tab"].adjLabel:setMoveCallback(function(event) self:onMove(v, event) end)
-        self[v.."tab"].adjLabel:setDoubleClickCallback(function(event) self:onDoubleClick(v, event) end)
-        self[v.."tab"].minimizeLabel:setClickCallback(function() self:onMinimizeClick(v) end)
-        self[v.."tab"].minimizeLabel:echo("&lt;center&gt;🗗&lt;/center&gt;")
-        self[v.."tab"].minLabel:setClickCallback(function() self:onMinimizeClick(v) end)
-        
-        
-        self[v.."center"] = self[v.."center"] or Geyser.Label:new({
-            name = v.."center",
-            x = 0, y = 0,
-            width = "100%",
-            height = "100%",
-        },self[v])
-        
-        self[v.."center"]:setStyleSheet(self.centerStyle)
-        self[v]:hide()
+        self[v].adjLabel:echo(self[v].tabText, nil, "c")
+        self[v].adjLabel:setClickCallback(function(event) self:onClick(v, event) end)
+        self[v].adjLabel:setReleaseCallback(function(event) self:onRelease(v, event) end)
+        self[v].adjLabel:setMoveCallback(function(event) self:onMove(v, event) end)
+        self[v].adjLabel:setDoubleClickCallback(function(event) self:onDoubleClick(v, event) end)
+        self[v].minimizeLabel:setClickCallback(function() self:onMinimizeClick(v) end)
+        self[v].minimizeLabel:echo("&lt;center&gt;🗗&lt;/center&gt;")
+        self[v].minLabel:setClickCallback(function() self:onMinimizeClick(v) end)
+        self[v.."center"]:hide()
     end
 end
 
@@ -285,20 +276,20 @@ function Adjustable.TabWindow:adjustTabStyle()
     local ibg_rgb = string.match(self.inactiveTabBGColor, "%d+.-%d+.-%d+")
     for k,v in ipairs(self.tabs) do
         if self[v].name == self.current then
-            self[v.."tab"].adjLabelstyle = self.activeTabStyle
-            self[v.."tab"].adjLabel:setStyleSheet(self.activeTabStyle)
+            self[v].adjLabelstyle = self.activeTabStyle
+            self[v].adjLabel:setStyleSheet(self.activeTabStyle)
             if abg_rgb then
-                self[v.."tab"].adjLabel:setColor("&lt;"..abg_rgb.."&gt;")
+                self[v].adjLabel:setColor("&lt;"..abg_rgb.."&gt;")
             else
-                self[v.."tab"].adjLabel:setColor(self.activeTabBGColor)
+                self[v].adjLabel:setColor(self.activeTabBGColor)
             end
         else
-            self[v.."tab"].adjLabelstyle = self.inactiveTabStyle
-            self[v.."tab"].adjLabel:setStyleSheet(self.inactiveTabStyle)
+            self[v].adjLabelstyle = self.inactiveTabStyle
+            self[v].adjLabel:setStyleSheet(self.inactiveTabStyle)
             if ibg_rgb then
-                self[v.."tab"].adjLabel:setColor("&lt;"..ibg_rgb.."&gt;")
+                self[v].adjLabel:setColor("&lt;"..ibg_rgb.."&gt;")
             else
-                self[v.."tab"].adjLabel:setColor(self.inactiveTabBGColor)
+                self[v].adjLabel:setColor(self.inactiveTabBGColor)
             end
         end
     end
@@ -309,7 +300,7 @@ end
 function Adjustable.TabWindow:setTabFont(font)
     self.tabFont = font
     for k,v in ipairs(self.tabs) do
-        self[v.."tab"].adjLabel:setFont(font)
+        self[v].adjLabel:setFont(font)
     end
 end
 
@@ -321,7 +312,7 @@ function Adjustable.TabWindow:setSingleTabFont(tabName, font)
     if not table.contains(self.tabs, tabName) then
         error("tabName must be an existing tab")
     end
-    self[tabName.."tab"].adjLabel:setFont(font)
+    self[tabName].adjLabel:setFont(font)
 end
 
 -- finds the right position to drop the tab into
@@ -355,7 +346,7 @@ local function getFloatingWindows()
     local floatingWindows = {}
     for k,v in pairs(Adjustable.TabWindow.allTabs) do
         if v[k].floating then
-            floatingWindows[k] = v[k.."tab"]
+            floatingWindows[k] = v[k]
         end
     end
     return floatingWindows
@@ -384,19 +375,19 @@ end
 -- onMove function
 -- contains all the functionality to move the tab (collision check, make space ...)
 function Adjustable.TabWindow:onMove(tab, event)
-    self[tab.."tab"]:onMove(self[tab.."tab"].adjLabel, event)
-    self[tab.."tab"].adjLabel:echo(self[tab].tabText, nil, "c")
+    self[tab]:onMove(self[tab].adjLabel, event)
+    self[tab].adjLabel:echo(self[tab].tabText, nil, "c")
     if self[tab].floating or not Adjustable.TabWindow.clicked then
         return
     end
-    local result, value = self:checkMultiCollision(self[tab.."tab"])
-    if Adjustable.TabWindow.currentWindow and Adjustable.TabWindow.currentWindow ~= value then
+    local result, value = self:checkMultiCollision(self[tab])
+    if Adjustable.TabWindow.currentWindow and Adjustable.TabWindow.currentWindow ~= value and not Adjustable.TabWindow.currentWindow.floating then
         -- reset the tab space
         self:makeSpace(Adjustable.TabWindow.currentWindow, nil, true)
     end
     if result == "TabWindow" then
         Adjustable.TabWindow.currentWindow = value
-        tab_pos = value:findPosition(self[tab.."tab"])
+        tab_pos = value:findPosition(self[tab])
         self:makeSpace(value, tab_pos)
         return
     end
@@ -429,7 +420,7 @@ function Adjustable.TabWindow:createTempWindow(tab, tempName)
     local tempTabWindowName = tempName or "tempTabWindow"..rnd_nr
     local x, y, width, height = 0,0,100,100
     if tab then
-      x, y, width, height = self[tab.name.."tab"]:get_x(), self[tab.name.."tab"]:get_y(), self[tab.name.."tab"]:get_width(), self[tab.name.."tab"]:get_height()
+      x, y, width, height = tab:get_x(), tab:get_y(), tab:get_width(), tab:get_height()
     end
     local tempWindowConf = { name = tempWindowName,
         titleText = "",
@@ -547,13 +538,13 @@ end
 function Adjustable.TabWindow:onOverlayClick(event) 
     Adjustable.TabWindow.doubleClick = nil
     local tab = Adjustable.TabWindow.clickedTab
-    local container = Adjustable.TabWindow.clickedTab.container.container.container or self
+    local container = Adjustable.TabWindow.allTabs[tab.name] or self
     tab.adjLabel:setStyleSheet(container.activeTabStyle)
-    if container[tab.tabname].floating then
-        container:restoreTab(tab.tabname, self)
-        self:addTab(tab.tabname, tab_pos)
+    if container[tab.name].floating then
+        container:restoreTab(tab.name, self)
+        self:addTab(tab.name, tab_pos)
     else
-        container:onRelease(tab.tabname, event)
+        container:onRelease(tab.name, event)
     end
     resetOverlay()
 end
@@ -561,7 +552,7 @@ end
 -- if clicked on the minimize label the tab will be 
 -- restored to be in a tabwindow again
 function Adjustable.TabWindow:onMinimizeClick(tab)  
-    local result, value = self:checkMultiCollision(self[tab.."tab"])
+    local result, value = self:checkMultiCollision(self[tab])
     if result == "floating" then
         value = nil
     end
@@ -574,9 +565,9 @@ function Adjustable.TabWindow:activateTab(tab)
     self:deactivateTab()
     self.current = tab
     if self.current then
-        self[tab.."tab"].adjLabelstyle = self.activeTabStyle
-        self[tab.."tab"].adjLabel:setStyleSheet(self.activeTabStyle)
-        self[self.current]:show()
+        self[tab].adjLabelstyle = self.activeTabStyle
+        self[tab].adjLabel:setStyleSheet(self.activeTabStyle)
+        self[self.current.."center"]:show()
     end
     self:raiseAll()
 end
@@ -584,49 +575,50 @@ end
 -- deactivates and hides the current active tab
 function Adjustable.TabWindow:deactivateTab()
     if self.current and self[self.current] then  
-        self[self.current.."tab"].adjLabelstyle = self.inactiveTabStyle
-        self[self.current.."tab"].adjLabel:setStyleSheet(self.inactiveTabStyle)
-        self[self.current]:hide()
+        self[self.current].adjLabelstyle = self.inactiveTabStyle
+        self[self.current].adjLabel:setStyleSheet(self.inactiveTabStyle)
+        self[self.current.."center"]:hide()
     end
 end
 
 -- handles click event on tab
 function Adjustable.TabWindow:onClick(tab, event)
+    if Adjustable.TabWindow.doubleClick then
+      return
+    end
     Adjustable.TabWindow.currentWindow = self
     Adjustable.TabWindow.clicked = true
-    Adjustable.TabWindow.clickedTab = self[tab.."tab"]
+    Adjustable.TabWindow.clickedTab = self[tab]
     if event.button == "LeftButton" and not self[tab].floating then
-        self[tab.."tab"]:resize(self[tab.."tab"].get_width(),self[tab.."tab"].get_height())
-        self[tab.."tab"].container = Geyser
+        self[tab]:resize(self[tab].get_width(),self[tab].get_height())
+        self[tab].container = Geyser
         -- set minimized to true to prevent resizing
-        self[tab.."tab"].minimized = true
-        self[tab.."tab"]:unlockContainer()
-        self[tab.."tab"]:onClick(self[tab.."tab"].adjLabel, event)
-        self[tab.."tab"].exitLabel:hide()
-        self[tab.."tab"].minimizeLabel:hide()
+        self[tab].minimized = true
+        self[tab]:unlockContainer()
+        self[tab]:onClick(self[tab].adjLabel, event)
+        self[tab].exitLabel:hide()
+        self[tab].minimizeLabel:hide()
         Adjustable.TabWindow.clicked = true
-        Adjustable.TabWindow.clickedTab = self[tab.."tab"]
-        self[tab.."tab"].adjLabel:echo(self[tab].tabText, nil, "c")
+        Adjustable.TabWindow.clickedTab = self[tab]
+        self[tab].adjLabel:echo(self[tab].tabText, nil, "c")
     end
     
     if self[tab].floating then
-        self[tab.."tab"]:onClick(self[tab.."tab"].adjLabel, event)
+        self[tab]:onClick(self[tab].adjLabel, event)
     end
     if not self[tab].floating then
         self:activateTab(tab)
-        self[tab.."tab"].adjLabel:raise(false)
+        self[tab].adjLabel:raise(false)
     end
 end
 
 -- handles double click event on getAreaTable
 -- activates the tab overlay
 function Adjustable.TabWindow:onDoubleClick(tab, event)
-    -- Prevent windows to float
-    self[tab.."tab"].container = self.header
     Adjustable.TabWindow.currentWindow = self
     Adjustable.TabWindow.doubleClick = true
-    Adjustable.TabWindow.clickedTab = self[tab.."tab"]
-    self[tab.."tab"].adjLabel:setStyleSheet(self.chosenTabStyle)
+    Adjustable.TabWindow.clickedTab = self[tab]
+    self[tab].adjLabel:setStyleSheet(self.chosenTabStyle)
     for k,v in pairs(Adjustable.TabWindow.all) do
         v.overlay:show()
         v.overlay:raise()
@@ -639,19 +631,21 @@ end
 -- handles the mouseclick event 
 -- used for sending windows to the main or userwindow after using doubleclick on a tab
 function Adjustable.TabWindow.onMouseClick( event, button, x, y, windowname )
-    local tab = Adjustable.TabWindow.clickedTab
-    local container = Adjustable.TabWindow.clickedTab.container.container.container
-    container:transformTabContainer(tab.tabname)
-    local width, height = tab:get_width(), tab:get_height()
-    local newContainer
-    if windowname == "main" then
-        newContainer = Geyser
-    else
+    local newContainer = Geyser
+    if windowname ~= "main" then
         newContainer = Geyser.windowList[windowname.."Container"].windowList[windowname]
-    end
+    end 
+    local tab = Adjustable.TabWindow.clickedTab
+    local container = Adjustable.TabWindow.allTabs[tab.name]
+    
+    container:transformTabContainer(tab.name)   
+    local width, height = math.min(newContainer.get_width(), tab:get_width()), math.min(newContainer.get_height(), tab:get_height())
+    
     tab:changeContainer(newContainer)
     tab:raiseAll()
-    tab:move(x,y)
+    local x = math.min(newContainer.get_width() - width, math.max(0, x - width/2))
+    local y = math.min(newContainer.get_height() - height, math.max(0, y))
+    tab:move(x, y)
     tab:resize(width, height)
     tab:setPercent(true,true)
     killAnonymousEventHandler(Adjustable.TabWindow.MouseEventID)
@@ -662,7 +656,7 @@ end
 -- transforms the tab to a window
 function Adjustable.TabWindow:transformTabContainer(tab)
     local myWindow = Adjustable.TabWindow.allTabs[tab] or self
-    local container = self[tab.."tab"]
+    local container = self[tab]
     if container.windowname == "main" then
         Geyser:add(container)
     else
@@ -670,7 +664,7 @@ function Adjustable.TabWindow:transformTabContainer(tab)
     end
     container:unlockContainer()
     container:resize(self.get_width(), self.get_height())
-    container:add(self[tab])
+    container:add(self[tab.."center"])
     myWindow:removeTab(tab)
     myWindow:createTabs()
     container:setPadding(self.tabPadding)
@@ -693,15 +687,15 @@ function Adjustable.TabWindow:transformTabContainer(tab)
         container.adjLabelstyle = container.adjLabelstyle.."\nqproperty-alignment: 'AlignTop' ;\n"
     end
     container.adjLabel:setStyleSheet(container.adjLabelstyle)
-    self[tab]:show()
+    self[tab.."center"]:show()
 end
 
 --restores the window to be a tab again
 function Adjustable.TabWindow:restoreTab(tab, myWindow)
     myWindow = myWindow or self
-    local container = self[tab.."tab"]
+    local container = self[tab]
     container.container:remove(container)
-    container:remove(self[tab])
+    container:remove(self[tab.."center"])
     container:setPadding(0)
     container:lockContainer()
     container.adjLabel:echo(self[tab].tabText, nil, "c")
@@ -747,17 +741,16 @@ end
 function Adjustable.TabWindow:changeTabContainer(tab, myWindow, position)
     if self ~= myWindow or self[tab].floating then
         myWindow[tab] = self[tab]
-        myWindow[tab.."tab"] = self[tab.."tab"]
         myWindow[tab.."center"] = self[tab.."center"]
-        self[tab.."tab"].container = not(self[tab].floating) and self.header or Geyser 
-        self[tab]:changeContainer(myWindow.footer)
-        self[tab.."tab"]:changeContainer(myWindow.header)
+        self[tab].container = not(self[tab].floating) and self.header or Geyser 
+        self[tab.."center"]:changeContainer(myWindow.footer)
+        self[tab]:changeContainer(myWindow.header)
         if not (self[tab].floating) then
             self:removeTab(tab)
             self:createTabs()
         end
         myWindow:createTabs()
-        myWindow[tab.."tab"]:show()
+        myWindow[tab]:show()
         if not(myWindow.hidden or myWindow.auto_hidden) then
             myWindow:show()
         end
@@ -778,14 +771,17 @@ end
 
 -- handles the release event
 function Adjustable.TabWindow:onRelease(tab, event, position)
+    if Adjustable.TabWindow.doubleClick then
+      return
+    end
     local myWindow = Adjustable.TabWindow.currentWindow or self
     local floating = self[tab].floating
     if event.button == "LeftButton" and Adjustable.TabWindow.currentWindow and myWindow.type == "adjustabletabwindow" and not floating then
-        self[tab.."tab"]:lockContainer()
-        self[tab.."tab"].container = self.header
-        self[tab.."tab"]:onRelease(self[tab.."tab"].adjLabel, event)
-        self[tab.."tab"].adjLabel:echo(self[tab].tabText, nil, "c")
-        tab_pos = tab_pos or myWindow:findPosition(self[tab.."tab"])
+        self[tab]:lockContainer()
+        self[tab].container = self.header
+        self[tab]:onRelease(self[tab].adjLabel, event)
+        self[tab].adjLabel:echo(self[tab].tabText, nil, "c")
+        tab_pos = tab_pos or myWindow:findPosition(self[tab])
         if myWindow ~= self then
             self:changeTabContainer(tab, myWindow)
         end  
@@ -793,22 +789,24 @@ function Adjustable.TabWindow:onRelease(tab, event, position)
         myWindow:raiseAll()
     end
     
-    if event.button == "LeftButton" and myWindow.tabname then
-      local tabname = myWindow.tabname
+    if event.button == "LeftButton" and myWindow.type == "adjustablecontainer" then
+      local tabname = myWindow.name
       local tabwindow = Adjustable.TabWindow.allTabs[tabname]
       local mytab = tabwindow[tabname]
       local tempWindow = tabwindow:createTempWindow(mytab)
       self:changeTabContainer(tab, tempWindow.tabWindow)
+      tempTimer(0, function() tempWindow.tabWindow:activateTab(tab) end)
       tempWindow:raiseAll()
+      self[tab]:onRelease(self[tab].adjLabel, event)
     end
     
     if event.button == "LeftButton" and not(Adjustable.TabWindow.currentWindow) and not floating then
         self:transformTabContainer(tab)
-        self[tab.."tab"]:onRelease(self[tab.."tab"].adjLabel, event)
+        self[tab]:onRelease(self[tab].adjLabel, event)
     end
     
     if floating then
-        self[tab.."tab"]:onRelease(self[tab.."tab"].adjLabel, event)
+        self[tab]:onRelease(self[tab].adjLabel, event)
     end
     
     Adjustable.TabWindow.clicked = false
@@ -826,13 +824,13 @@ function Adjustable.TabWindow:setTabText(which, text)
     text = "&lt;center&gt;"..text
     if type(which) == "number" and which &lt;= #self.tabs then
         self[self.tabs[which]].tabText = text
-        self[self.tabs[which].."tab"].adjLabel:echo(text, nil, "c")
+        self[self.tabs[which]].adjLabel:echo(text, nil, "c")
         return true
     end
     local index = table.index_of(self.tabs, which)
     if index then
         self[self.tabs[index]].tabText = text
-        self[self.tabs[index].."tab"].adjLabel:echo(text, nil, "c")
+        self[self.tabs[index]].adjLabel:echo(text, nil, "c")
         return true
     end
     return nil, "setTabText: Couldn't find tab to set a new text"
@@ -849,8 +847,8 @@ function Adjustable.TabWindow:removeTab(which)
     end
     if index then
         local tabname = self.tabs[index]
-        self[tabname.."tab"]:hide()
-        self.header:remove(self[tabname.."tab"])
+        self[tabname]:hide()
+        self.header:remove(self[tabname])
         self.header:organize()
         table.remove(self.tabs, index)
         self:activateTab(self.tabs[1])
@@ -865,8 +863,8 @@ function Adjustable.TabWindow:removeTab(which)
                 for k,v in pairs (Adjustable.TabWindow.allTabs) do
                   if v.name == self.name then
                     Adjustable.TabWindow.allTabs[k] = v[k].origin
-                    v[k].origin[k.."tab"].minimizeLabel:setClickCallback(function() v[k].origin:onMinimizeClick(k) end)
-                    v[k].origin[k.."tab"].minLabel:setClickCallback(function() v[k].origin:onMinimizeClick(k) end)
+                    v[k].origin[k].minimizeLabel:setClickCallback(function() v[k].origin:onMinimizeClick(k) end)
+                    v[k].origin[k].minLabel:setClickCallback(function() v[k].origin:onMinimizeClick(k) end)
                   end
                 end
             end
@@ -912,17 +910,17 @@ function Adjustable.TabWindow:addTab(name, pos)
     end
     
     --If the container isn't the right one change it (useful if removed in one adj tabwindow and added to another)
-    self[name]:changeContainer(self.footer)
-    self[name.."tab"]:changeContainer(self.header)  
+    self[name.."center"]:changeContainer(self.footer)
+    self[name]:changeContainer(self.header)  
     
     -- if name is already in windows delete it to put it into the right position
-    local headerIndex = table.index_of(self.header.windows, self[name.."tab"].name)
+    local headerIndex = table.index_of(self.header.windows, name)
     if headerIndex then
         table.remove(self.header.windows, headerIndex)
     end
-    table.insert(self.header.windows, pos, self[name.."tab"].name)
-    self.header.windowList[self[name.."tab"].name] = self[name.."tab"]
-    self[name.."tab"]:show()
+    table.insert(self.header.windows, pos, name)
+    self.header.windowList[name] = self[name]
+    self[name]:show()
     self.header:organize()
     self:activateTab(name)
     if self.temporary then
@@ -949,7 +947,7 @@ function Adjustable.TabWindow:save()
     for k,v in pairs(Adjustable.TabWindow.allTabs) do
         if v[k].floating then
             -- save the tabs adjustable container settings
-            v[k.."tab"]:save()
+            v[k]:save()
             -- get all floating tabs and their windownames
             mytable[v.name].floatingTabs = {}
             mytable[v.name].floatingTabs[k] = "main"
@@ -1001,7 +999,7 @@ function Adjustable.TabWindow:load()
                 if myTab.floating then
                     myTabWindow:restoreTab(v1)
                 end
-                if not myWindow.header.windowList[v1.."tab"] then
+                if not myWindow.header.windowList[v1] then
                     myTabWindow:changeTabContainer(v1, myWindow)
                 end
                 myWindow:addTab(v1,k1)
@@ -1018,7 +1016,7 @@ function Adjustable.TabWindow:load()
             for k1, v1 in pairs(v.floatingTabs) do
                 local myTabWindow = Adjustable.TabWindow.allTabs[k1]
                 if myTabWindow then
-                    local myTab = myTabWindow[k1.."tab"]
+                    local myTab = myTabWindow[k1]
                     myTabWindow:transformTabContainer(k1)
                     -- send my Tab to a UserWindow if saved there
                     if v1 ~= "main" then
@@ -1063,14 +1061,14 @@ function Adjustable.TabWindow:transferEMCO(emco)
     function(s)
         s.currentTab = self.current
         if s.blink then
-            if s.allTab and (s.currentTab == s.allTabName or self[s.allTabName].hidden == false) then
+            if s.allTab and not s.blinkFromAll and (s.currentTab == s.allTabName or self[s.allTabName.."center"].hidden == false) then
                 s.tabsToBlink = {}
             elseif s.tabsToBlink[s.currentTab] then
                 s.tabsToBlink[s.currentTab] = nil
             end
         end    
         for tab,_ in pairs(s.tabsToBlink) do
-            if not self[tab].floating and self[tab].hidden then
+            if not self[tab].floating and self[tab.."center"].hidden then
                 s.tabs[tab]:flash()
             else
                 s.tabsToBlink[tab] = nil
@@ -1082,13 +1080,13 @@ function Adjustable.TabWindow:transferEMCO(emco)
     local function transferTab(tabwindow)
         emco_windows[tabwindow]:show()
         emco_windows[tabwindow]:changeContainer(self[tabwindow.."center"])
-        emco_tabs[tabwindow]:changeContainer(self[tabwindow.."tab"])
+        emco_tabs[tabwindow]:changeContainer(self[tabwindow])
         emco_tabs[tabwindow]:move(0,0)
         emco_tabs[tabwindow]:resize("100%","100%")
         emco_tabs[tabwindow]:hide()
         emco_tabs[tabwindow].flash = myFlash
         if emco_tabs[tabwindow].font then
-            self[tabwindow.."tab"].adjLabel:setFont(emco_tabs[tabwindow].font)
+            self[tabwindow].adjLabel:setFont(emco_tabs[tabwindow].font)
         end  
     end
     
@@ -1241,14 +1239,7 @@ function Adjustable.TabWindow:new(cons, container)
     
     ]]
     
-    me.containerStyle = me.containerStyle or [[
-    background-color: ]]..me.color1..[[;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    margin-right: 1px;
-    margin-left: 1px;
-    ]]
-    
+ 
     me.overlayStyle = me.overlayStyle or [[
     background-color: rgba(0,0,0,0%);
     border: 2px solid white;]]
@@ -1285,7 +1276,7 @@ function Adjustable.TabWindow:new(cons, container)
     tempTimer(0, 
     function() 
         if me.tabs[1] then 
-            me[me.tabs[#me.tabs]]:hide()
+            me[me.tabs[#me.tabs].."center"]:hide()
         end 
     end )
     
