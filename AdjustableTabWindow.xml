@@ -359,7 +359,7 @@ function Adjustable.TabWindow:checkMultiCollision(tab)
     local x1, y1, w1, h1 = tab:get_x(), tab:get_y(), tab:get_width(), tab:get_height()
     for k,v in pairs(floatingWindows) do
         local x2, y2, w2, h2 = v:get_x(), v:get_y(), v:get_width(), v:get_height()   
-        if checkCollision(x1,y1,w1,h1, x2,y2,w2,h2) and v.windowname == self.windowname and not(v.hidden or v.auto_hidden) and not (v == tab) then
+        if checkCollision(x1,y1,w1,h1, x2,y2,w2,h2) and v.windowname == self.windowname and not(v.hidden or v.auto_hidden) and not (v == tab) and not v.locked then
             return "floating", v
         end
     end  
