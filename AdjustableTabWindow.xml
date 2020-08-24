@@ -949,7 +949,7 @@ function Adjustable.TabWindow:save(slot, dir)
             -- save the tabs adjustable container settings
             v[k]:save()
             -- get all floating tabs and their windownames
-            mytable[v.name].floatingTabs = {}
+            mytable[v.name].floatingTabs = mytable[v.name].floatingTabs or {}
             mytable[v.name].floatingTabs[k] = "main"
             if v[k].windowname ~= "main" then
                 mytable[v.name].floatingTabs[k] = v[k].windowname
