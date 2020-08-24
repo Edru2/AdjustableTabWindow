@@ -934,7 +934,7 @@ end
 -- like tab position and some other variables in your Mudlet Profile Dir/ Adjustable.TabWindow
 -- to be reliable it is important that every Adjustable.TabWindow has an unique 'name'
 -- @see Adjustable.TabWindow:load
-function Adjustable.TabWindow:save()
+function Adjustable.TabWindow:save(slot, dir)
     local mytable = {}
     -- save fixed tabs
     for k,v in pairs(Adjustable.TabWindow.all) do
@@ -963,18 +963,27 @@ function Adjustable.TabWindow:save()
            mytable[v.name].tempStyle = v[k].tempTabWindow.tempStyle
         end
     end
-    if not(io.exists(getMudletHomeDir().."/AdjustableTabWindow/")) then lfs.mkdir(getMudletHomeDir().."/AdjustableTabWindow/") end
-    table.save(getMudletHomeDir().."/AdjustableTabWindow/TabWindowTabs.lua", mytable)
+    
+    local dir = dir or getMudletHomeDir().."/AdjustableTabWindow/"
+    local slot = slot or ""
+    local saveDir = dir.."TabWindowTabs"..slot..".lua"
+    if not(io.exists(dir)) then lfs.mkdir(dir) end
+    table.save(saveDir, mytable)
 end
 
 
 --- restores/loads the before saved settings 
 -- it is very important to load after all TabWindows are created
 -- @see Adjustable.TabWindow:save
-function Adjustable.TabWindow:load()
+function Adjustable.TabWindow:load(slot, dir)
+    local dir = dir or getMudletHomeDir().."/AdjustableTabWindow/"
+    local slot = slot or ""
+    local loadDir = dir.."TabWindowTabs"..slot..".lua"
     local mytable = {}
-    if io.exists(getMudletHomeDir().."/AdjustableTabWindow/TabWindowTabs.lua") then
-        table.load(getMudletHomeDir().."/AdjustableTabWindow/TabWindowTabs.lua", mytable)
+    if io.exists(loadDir) then
+        table.load(loadDir, mytable)
+    else
+      return "No saved settings found at: "..loadDir
     end
     -- create TempWindows and TempTabWindows
     for k,v in pairs (mytable) do
