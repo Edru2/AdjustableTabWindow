@@ -143,9 +143,10 @@ function Adjustable.TabWindow:createTabs()
             self[v].adjLabel:echo(self[v].tabText, nil, "c")
         end
         
-        self[v]:newCustomItem("Tabify", function() self:createTempWindow(self[v]) end)
-        
+       
         Adjustable.TabWindow.allTabs[v] = self
+        
+        self[v]:newCustomItem("Tabify", function() Adjustable.TabWindow.allTabs[v]:createTempWindow(self[v]) end)
         
         self[v].reposition = self.reposition
         table.remove(Adjustable.Container.all_windows, table.index_of(Adjustable.Container.all_windows, v))
