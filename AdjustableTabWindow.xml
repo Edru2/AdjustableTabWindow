@@ -382,7 +382,7 @@ end
 -- contains all the functionality to move the tab (collision check, make space ...)
 function Adjustable.TabWindow:onMove(tab, event)
     self[tab]:onMove(self[tab].adjLabel, event)
-    self[tab].adjLabel:echo(self[tab].tabText, nil, "c")
+    self[tab].adjLabel:setAlignment("c")
     if self[tab].floating or not Adjustable.TabWindow.clicked then
         return
     end
