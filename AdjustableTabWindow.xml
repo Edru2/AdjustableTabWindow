@@ -220,7 +220,7 @@ function Adjustable.TabWindow:setActiveTabFGColor(color)
     local r, g, b = Geyser.Color.parse(color)
     local rgb = string.format("rgb(%s, %s, %s)",r,g,b)
     self.activeTabFGColor = color
-    self.activeTabStyle, found = string.gsub(self.activeTabStyle, "(%scolor:).-(;)","%1"..rgb.."%2")
+    self.activeTabStyle, found = string.gsub(" "..self.activeTabStyle, "(%scolor:).-(;)","%1"..rgb.."%2")
     if found == 0 then
         if string.match(self.activeTabStyle,"QLabel{") then
             add_css = "\nQLabel{color:"..rgb..";}"
@@ -241,7 +241,7 @@ function Adjustable.TabWindow:setInactiveTabFGColor(color)
     local r, g, b = Geyser.Color.parse(color)
     local rgb = string.format("rgb(%s, %s, %s)",r,g,b)
     
-    self.inactiveTabStyle, found = string.gsub(self.inactiveTabStyle, "(%scolor:).-(;)","%1"..rgb.."%2") 
+    self.inactiveTabStyle, found = string.gsub(" "..self.inactiveTabStyle, "(%scolor:).-(;)","%1"..rgb.."%2") 
     if found == 0 then
         if string.match(self.inactiveTabStyle,"QLabel{") then
             add_css = "\nQLabel{color:"..rgb..";}"
@@ -945,7 +945,9 @@ function Adjustable.TabWindow:addToTabWindow(container)
   self:addTab(name)
   if container.type == "adjustablecontainer" then
     container:lockContainer("full")
-    container:disableAutoSave()
+    if container.autoSave then
+      container:disableAutoSave()
+    end
   end
   container:changeContainer(self[name.."center"])
   container:resize("100%","100%")
@@ -1017,8 +1019,8 @@ function Adjustable.TabWindow:save(slot, dir)
         
         --tabified containers
         if v[k].tabified then
-          mytable[v.name].tabifiedContainers = {}
-          mytable[v.name].tabifiedContainers[#mytable[v.name].tabifiedContainers + 1] = k
+          mytable.tabifiedContainers = mytable.tabifiedContainers or {}
+          mytable.tabifiedContainers[#mytable.tabifiedContainers + 1] = k
         end
     end
     
@@ -1064,15 +1066,11 @@ function Adjustable.TabWindow:load(slot, dir)
     end
     
    -- create Tabified Windows
-    for k,v in pairs (mytable) do
-      if v.tabifiedContainers then
-        for _,v1 in ipairs(v.tabifiedContainers) do
-          local container = findWindow(nil, v1)
-          Adjustable.TabWindow.all[Adjustable.TabWindow.all_windows[1]]:addToTabWindow(container)
-        end
-      end
+    for k,v in ipairs (mytable.tabifiedContainers) do
+      local container = findWindow(nil, v)
+      Adjustable.TabWindow.all[Adjustable.TabWindow.all_windows[1]]:addToTabWindow(container)
     end
-   
+    mytable.tabifiedContainers = nil
     -- create TempWindows and TempTabWindows
     for k,v in pairs (mytable) do
         if v.temporary then
@@ -1280,8 +1278,6 @@ function Adjustable.TabWindow:new(cons, container)
     me.type = "adjustabletabwindow"
     me.tabs = me.tabs or {}
     me.tabTxtColor = me.tabTxtColor or "white"
-    me.activeTabFGColor = me.activeTabFGColor or nil
-    me.inactiveTabFGColor = me.inactiveTabFGColor or nil
     me.tabPadding = me.tabPadding or 12
     me.color1 = me.color1 or "rgb(0,0,100)"
     me.color2 = me.color2 or "rgb(0,0,70)"
@@ -1337,6 +1333,7 @@ function Adjustable.TabWindow:new(cons, container)
     border-top-right-radius: 10px;
     margin-right: 1px;
     margin-left: 1px;
+    color: ]]..me.tabTxtColor..[[;
     
     ]]
     
@@ -1368,6 +1365,16 @@ function Adjustable.TabWindow:new(cons, container)
         me:setTabBarColor(me.tabBarColor)
     else
         me.tabBarColor = "black"
+    end
+    
+    local found = string.match(" "..me.activeTabStyle, "(%scolor:).-(;)")
+    if not(found) then
+      me.activeTabFGColor = me.activeTabFGColor or me.tabTxtColor
+    end
+    
+    found = string.match(" "..me.inactiveTabStyle, "(%scolor:).-(;)")
+    if not(found) then
+      me.inactiveTabFGColor = me.inactiveTabFGColor or me.tabTxtColor
     end
     
     if me.activeTabFGColor then 
