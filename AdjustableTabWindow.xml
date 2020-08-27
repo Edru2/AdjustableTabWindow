@@ -131,6 +131,7 @@ function Adjustable.TabWindow:createTabs()
             titleTxtColor = self.tabTxtColor
 
         }, self.header)
+        
         self[v].adjLabel.echo = noColorEcho
         self[v]:newLockStyle("tab", 
         function(self)         
@@ -1279,8 +1280,8 @@ function Adjustable.TabWindow:new(cons, container)
     me.type = "adjustabletabwindow"
     me.tabs = me.tabs or {}
     me.tabTxtColor = me.tabTxtColor or "white"
-    me.activeTabFGColor = me.activeTabFGColor or me.tabTxtColor
-    me.inactiveTabFGColor = me.inactiveTabFGColor or me.tabTxtColor
+    me.activeTabFGColor = me.activeTabFGColor or nil
+    me.inactiveTabFGColor = me.inactiveTabFGColor or nil
     me.tabPadding = me.tabPadding or 12
     me.color1 = me.color1 or "rgb(0,0,100)"
     me.color2 = me.color2 or "rgb(0,0,70)"
@@ -1302,7 +1303,7 @@ function Adjustable.TabWindow:new(cons, container)
     
     me.inactiveTabStyle = me.inactiveTabStyle or [[QLabel::hover{
         background-color: ]]..me.activeTabBGColor..[[;
-        color: ]]..me.activeTabFGColor..[[;
+        color: ]]..me.tabTxtColor..[[;
         border-top-left-radius: 10px;
         border-top-right-radius: 10px;
         margin-right: 1px;
@@ -1311,7 +1312,7 @@ function Adjustable.TabWindow:new(cons, container)
     }
     QLabel::!hover{
         background-color: ]]..me.inactiveTabBGColor..[[;
-        color: ]]..me.inactiveTabFGColor..[[;
+        color: ]]..me.tabTxtColor..[[;
         border-top-left-radius: 10px;
         border-top-right-radius: 10px;
         margin-right: 1px;
@@ -1322,7 +1323,7 @@ function Adjustable.TabWindow:new(cons, container)
     
     me.activeTabStyle = me.activeTabStyle or [[
     background-color: ]]..me.activeTabBGColor..[[;
-    color: ]]..me.activeTabFGColor..[[;
+    color: ]]..me.tabTxtColor..[[;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
     margin-right: 1px;
@@ -1368,6 +1369,14 @@ function Adjustable.TabWindow:new(cons, container)
     else
         me.tabBarColor = "black"
     end
+    
+    if me.activeTabFGColor then 
+      me:setActiveTabFGColor(me.activeTabFGColor)
+    end
+    if me.inactiveTabFGColor then
+      me:setInactiveTabFGColor(me.inactiveTabFGColor)
+    end
+       
     me.current = me.current or me.tabs[#me.tabs]
     
     if me.tabs[1] then
