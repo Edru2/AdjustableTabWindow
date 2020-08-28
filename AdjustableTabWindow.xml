@@ -12,7 +12,8 @@
 			<script>-- Adjustable TabWindow
 -- TabWindow code by Mudlet Wiki
 -- other functions
--- by Edru 28th August 2020 
+-- by Edru 28th August 2020
+-- https://github.com/Edru2/AdjustableTabWindow 
 
 Adjustable = Adjustable or {}
 Adjustable.TabWindow = Adjustable.TabWindow or Geyser.Container:new({name = "AdjustableTabWindowClass"})
