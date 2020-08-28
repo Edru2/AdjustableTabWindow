@@ -819,6 +819,7 @@ function Adjustable.TabWindow:onRelease(tab, event, position)
         tempTimer(0, function() tempWindow.tabWindow:activateTab(tab) end)
         tempWindow:raiseAll()
         self[tab]:onRelease(self[tab].adjLabel, event)
+        Adjustable.TabWindow.currentWindow = tempWindow.tabWindow
     end
     
     if event.button == "LeftButton" and not(Adjustable.TabWindow.currentWindow) and not floating then
@@ -882,9 +883,12 @@ function Adjustable.TabWindow:removeTab(which)
                 -- delete all references to this tab to avoid it being sent to nirwana if restored
                 for k,v in pairs (Adjustable.TabWindow.allTabs) do
                     if v.name == self.name then
-                        Adjustable.TabWindow.allTabs[k] = v[k].origin
-                        v[k].origin[k].minimizeLabel:setClickCallback(function() v[k].origin:onMinimizeClick(k) end)
-                        v[k].origin[k].minLabel:setClickCallback(function() v[k].origin:onMinimizeClick(k) end)
+                        local styleOrigin = Adjustable.TabWindow.all[self.tempStyle]
+                        Adjustable.TabWindow.allTabs[k] = styleOrigin
+                        styleOrigin[k] = styleOrigin[k] or self[k]
+                        styleOrigin[k.."center"] = styleOrigin[k.."center"] or self[k.."center"]
+                        styleOrigin[k].minimizeLabel:setClickCallback(function() styleOrigin[k]:onMinimizeClick(k) end)
+                        styleOrigin[k].minLabel:setClickCallback(function() styleOrigin[k]:onMinimizeClick(k) end)
                     end
                 end
             end
@@ -1139,8 +1143,13 @@ function Adjustable.TabWindow:load(slot, dir)
         if v.floatingTabs then
             for k1, v1 in pairs(v.floatingTabs) do
                 local myTabWindow = Adjustable.TabWindow.allTabs[k1]
-                if myTabWindow then
+                local styleTabWindow = Adjustable.TabWindow.all[k]
+                if myTabWindow and styleTabWindow  then
                     local myTab = myTabWindow[k1]
+                    if myTabWindow ~= styleTabWindow then
+                      myTabWindow:changeTabContainer(k1, styleTabWindow)
+                      myTabWindow = styleTabWindow
+                    end
                     myTabWindow:transformTabContainer(k1)
                     -- send my Tab to a UserWindow if saved there
                     if v1 ~= "main" then
