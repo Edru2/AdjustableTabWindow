@@ -1006,6 +1006,11 @@ function Adjustable.TabWindow:save(slot, dir)
     end
     assert(slot == nil or type(slot) == "string" or type(slot) == "number", "Adjustable.TabWindow.save: bad argument #1 type (slot as string or number expected, got "..type(slot).."!)")
     assert(dir == nil or type(dir) == "string" , "Adjustable.TabWindow.save: bad argument #2 type (directory as string expected, got "..type(dir).."!)")
+    
+    local dir = dir or getMudletHomeDir().."/AdjustableTabWindow/"
+    local slot = slot or ""
+    local saveDir = dir.."TabWindowTabs"..slot..".lua"
+    
     local mytable = {}
     -- save fixed tabs
     for k,v in pairs(Adjustable.TabWindow.all) do
@@ -1020,7 +1025,7 @@ function Adjustable.TabWindow:save(slot, dir)
         --floating tabs
         if v[k].floating then
             -- save the tabs adjustable container settings
-            v[k]:save()
+            v[k]:save(slot, dir)
             -- get all floating tabs and their windownames
             mytable[v.name].floatingTabs = mytable[v.name].floatingTabs or {}
             mytable[v.name].floatingTabs[k] = "main"
@@ -1032,7 +1037,7 @@ function Adjustable.TabWindow:save(slot, dir)
         --tempTabWindows
         if v[k].tempWindow then
             --save tempWindow adjustable container settings
-            v[k].tempWindow:save()
+            v[k].tempWindow:save(slot, dir)
             mytable[v.name].windowname = v[k].tempWindow.windowname
             --save window where tempStyle came from
             mytable[v.name].tempStyle = v[k].tempTabWindow.tempStyle
@@ -1045,9 +1050,6 @@ function Adjustable.TabWindow:save(slot, dir)
         end
     end
     
-    local dir = dir or getMudletHomeDir().."/AdjustableTabWindow/"
-    local slot = slot or ""
-    local saveDir = dir.."TabWindowTabs"..slot..".lua"
     if not(io.exists(dir)) then lfs.mkdir(dir) end
     table.save(saveDir, mytable)
 end
@@ -1103,7 +1105,7 @@ function Adjustable.TabWindow:load(slot, dir)
                 local tempStyleWindow = Adjustable.TabWindow.all[v.tempStyle]
                 tempStyleWindow:createTempWindow(nil, k)
             end
-            Adjustable.TabWindow.all[k].container.container:load()
+            Adjustable.TabWindow.all[k].container.container:load(slot, dir)
             if v.windowname ~= "main" then
                 Adjustable.TabWindow.all[k].container.container:changeContainer(Geyser.windowList[v.windowname.."Container"].windowList[v.windowname])
             end
@@ -1145,7 +1147,7 @@ function Adjustable.TabWindow:load(slot, dir)
                         myTab:changeContainer(Geyser.windowList[v1.."Container"].windowList[v1])
                     end
                     -- load Adjustable Container settings
-                    myTab:load()
+                    myTab:load(slot, dir)
                 end
             end
         end        
@@ -1253,8 +1255,8 @@ function Adjustable.TabWindow:transferEMCO(emco)
     emco.setInactiveTabFGColor = function(s, color) EMCO.setInactiveTabFGColor(s, color) self:setInactiveTabFGColor(color) end
     emco.setSingleTabFont = function(s, tab, font) EMCO.setSingleTabFont(s, tab, font) self:setSingleTabFont(tab, font) end
     emco.setTabFont = function(s, font) EMCO.setTabFont(s, font) self:setTabFont(font) end
-    emco.save = function(s, slot) EMCO.save(s) self:save(slot) end
-    emco.load = function(s, slot) EMCO.load(s) self:load(slot) end
+    emco.save = function(s, slot, dir) EMCO.save(s) self:save(slot, dir) end
+    emco.load = function(s, slot, dir) EMCO.load(s) self:load(slot, dir) end
 end
 
 -- EMCO by demonnic https://github.com/demonnic/EMCO
