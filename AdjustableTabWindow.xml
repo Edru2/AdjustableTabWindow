@@ -12,7 +12,7 @@
 			<script>-- Adjustable TabWindow
 -- TabWindow code by Mudlet Wiki
 -- other functions
--- by Edru 28th August 2020
+-- by Edru 10th October 2020
 -- https://github.com/Edru2/AdjustableTabWindow 
 
 Adjustable = Adjustable or {}
@@ -720,6 +720,8 @@ function Adjustable.TabWindow:restoreTab(tab, myWindow)
     container:remove(self[tab.."center"])
     container:setPadding(0)
     container:lockContainer()
+    container:detach()
+    container:disconnect()
     container.adjLabel:echo(self[tab].tabText, nil, "c")
     self:changeTabContainer(tab, myWindow)
     self[tab].floating = false
@@ -880,6 +882,8 @@ function Adjustable.TabWindow:removeTab(which)
                 self[tabname].tempWindow:changeContainer("main")
                 Adjustable.TabWindow.all[self.name] = nil
                 table.remove(Adjustable.TabWindow.all_windows, table.index_of(Adjustable.TabWindow.all_windows, self))
+                self[tabname].tempWindow:detach()
+                self[tabname].tempWindow:disconnect()
                 self[tabname].tempWindow:hide()
                 -- delete all references to this tab to avoid it being sent to nirwana if restored
                 for k,v in pairs (Adjustable.TabWindow.allTabs) do
@@ -961,10 +965,9 @@ end
 
 function Adjustable.TabWindow:addToTabWindow(container)
     local name = container.name
-    if Adjustable.TabWindow.allTabs[name] then
-        --return "there is already a tab with this name"
-    end
     self:addTab(name)
+    container:detach()
+    container:disconnect()
     container:changeContainer(self[name.."center"])
     container:resize("100%","100%")
     container:move(0,0)
@@ -1012,9 +1015,9 @@ function Adjustable.TabWindow:save(slot, dir)
     assert(slot == nil or type(slot) == "string" or type(slot) == "number", "Adjustable.TabWindow.save: bad argument #1 type (slot as string or number expected, got "..type(slot).."!)")
     assert(dir == nil or type(dir) == "string" , "Adjustable.TabWindow.save: bad argument #2 type (directory as string expected, got "..type(dir).."!)")
     
-    local dir = dir or getMudletHomeDir().."/AdjustableTabWindow/"
-    local slot = slot or ""
-    local saveDir = dir.."TabWindowTabs"..slot..".lua"
+    dir = dir or self.defaultDir
+    slot = slot or ""
+    local saveDir = string.format("%s%s%s.lua", dir, "TabWindowTabs", slot)
     
     local mytable = {}
     -- save fixed tabs
@@ -1070,9 +1073,9 @@ function Adjustable.TabWindow:load(slot, dir)
     end
     assert(slot == nil or type(slot) == "string" or type(slot) == "number", "Adjustable.TabWindow.load: bad argument #1 type (slot as string or number expected, got "..type(slot).."!)")
     assert(dir == nil or type(dir) == "string" , "Adjustable.TabWindow.load: bad argument #2 type (directory as string expected, got "..type(dir).."!)")
-    local dir = dir or getMudletHomeDir().."/AdjustableTabWindow/"
+    dir = dir or self.defaultDir
     local slot = slot or ""
-    local loadDir = dir.."TabWindowTabs"..slot..".lua"
+    local loadDir = string.format("%s%s%s.lua", dir, "TabWindowTabs", slot)
     local mytable = {}
     if io.exists(loadDir) then
         table.load(loadDir, mytable)
@@ -1313,6 +1316,7 @@ function Adjustable.TabWindow:new(cons, container)
     setmetatable(me, self)
     self.__index = self
     me.type = "adjustabletabwindow"
+    me.defaultDir = me.defaultDir or getMudletHomeDir().."/AdjustableTabWindow/"
     me.tabs = me.tabs or {}
     me.tabTxtColor = me.tabTxtColor or "white"
     me.tabPadding = me.tabPadding or 12
