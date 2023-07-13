@@ -1398,9 +1398,10 @@ function Adjustable.TabWindow:new(cons, container)
         me:activateTab(me.tabs[1])
     end
     tempTimer(0, 
-    function() 
-        if me.tabs[1] then 
-            me[me.tabs[#me.tabs].."center"]:hide()
+    function()
+        local tabNr = #me.tabs 
+        if me.tabs[1] and tabNr &gt; 1 then 
+            me[me.tabs[tabNr].."center"]:hide()
         end 
     end )
     
