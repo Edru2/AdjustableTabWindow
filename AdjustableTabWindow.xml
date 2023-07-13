@@ -19,43 +19,6 @@ Adjustable = Adjustable or {}
 Adjustable.TabWindow = Adjustable.TabWindow or Geyser.Container:new({name = "AdjustableTabWindowClass"})
 local tab_pos = nil
 
---Geyser.Label echo function overwritten to not have the color function in it
---needed for allowing stylesheet to control the text color
-local function noColorEcho(self, message, color, format)
-    message = message or self.message
-    self.message = message
-    if format then self:processFormatString(format) end
-    
-    local ft = self.formatTable
-    local fs = ft.fontSize
-    local alignment = ft.alignment
-    if alignment ~= "" then
-        alignment = string.format([[align="%s" ]], alignment)
-    end
-    if ft.bold then
-        message = "&lt;b&gt;" .. message .. "&lt;/b&gt;"
-    end
-    if ft.italics then
-        message = "&lt;i&gt;" .. message .. "&lt;/i&gt;"
-    end
-    if ft.underline then
-        message = "&lt;u&gt;" .. message .. "&lt;/u&gt;"
-    end
-    if ft.strikethrough then
-        message = "&lt;s&gt;" .. message .. "&lt;/s&gt;"
-    end
-    if self.font and self.font ~= "" then
-        message = string.format('&lt;font face ="%s"&gt;%s&lt;/font&gt;', self.font, message)
-    end
-    if not fs then
-        fs = tostring(self.fontSize)
-    end
-    fs = "font-size: " .. fs .. "pt; "
-    message = [[&lt;div ]] .. alignment .. [[ style=" ]] .. fs ..
-    [["&gt;]] .. message .. [[&lt;/div&gt;]]
-    echo(self.name, message)
-end
-
 function Adjustable.TabWindow:createBaseContainers()
     self.tabBar = self.tabBar or Geyser.Label:new({        
         name = self.name.."tabBar",
@@ -143,8 +106,9 @@ function Adjustable.TabWindow:createTabs()
             
         }, self.header)
         
-        self[v].adjLabel.echo = noColorEcho
-        self[v]:setTitle(tabText)
+        self[v]:setTitle("", self.TabTxtColor)
+        self[v].titleText = "&amp;nbsp;&amp;nbsp;"..tabText
+        self[v].adjLabel:echo(tabText, self.TabTxtColor)
         self[v]:newLockStyle("tab", 
         function(self)         
             self.Inside:resize("-"..self.padding,"-"..self.padding)
@@ -155,7 +119,9 @@ function Adjustable.TabWindow:createTabs()
         
         self[v].unlockContainer = function()
             Adjustable.Container.unlockContainer(self[v])
-            self[v].adjLabel:echo(self[v].tabText, nil, "c")
+            self[v]:setTitle("", self.tabTxtColor)
+            self[v].titleText = ("&amp;nbsp;&amp;nbsp;"..self[v].tabText)
+            self[v].adjLabel:echo(self[v].tabText, "nocolor", "c")
         end
         
         
@@ -173,7 +139,7 @@ function Adjustable.TabWindow:createTabs()
         self[v].titleTxtColor = self.tabTxtColor
         self[v].adjLabel:setStyleSheet(self.inactiveTabStyle)
         
-        self[v].adjLabel:echo(self[v].tabText, nil, "c")
+        self[v].adjLabel:echo(self[v].tabText, "nocolor", "c")
         self[v].adjLabel:setClickCallback(function(event) self:onClick(v, event) end)
         self[v].adjLabel:setReleaseCallback(function(event) self:onRelease(v, event) end)
         self[v].adjLabel:setMoveCallback(function(event) self:onMove(v, event) end)
@@ -621,7 +587,7 @@ function Adjustable.TabWindow:onClick(tab, event)
         self[tab].minimizeLabel:hide()
         Adjustable.TabWindow.clicked = true
         Adjustable.TabWindow.clickedTab = self[tab]
-        self[tab].adjLabel:echo(self[tab].tabText, nil, "c")
+        self[tab].adjLabel:echo(self[tab].tabText, "nocolor", "c")
     end
     
     if self[tab].floating then
@@ -693,7 +659,7 @@ function Adjustable.TabWindow:transformTabContainer(tab)
     container:raiseAll()
     myWindow[tab].floating = true
     container.raiseOnClick = true
-    container.adjLabel:echo(self[tab].tabText, nil, "c")
+    container.adjLabel:echo(self[tab].tabText, "nocolor", "c")
     container.adjLabel:resetToolTip()
     container.minimized = false
     container:setPercent(true, true)
@@ -722,7 +688,7 @@ function Adjustable.TabWindow:restoreTab(tab, myWindow)
     container:lockContainer()
     container:detach()
     container:disconnect()
-    container.adjLabel:echo(self[tab].tabText, nil, "c")
+    container.adjLabel:echo(self[tab].tabText, "nocolor", "c")
     self:changeTabContainer(tab, myWindow)
     self[tab].floating = false
     container.raiseOnClick = false
@@ -804,7 +770,7 @@ function Adjustable.TabWindow:onRelease(tab, event, position)
         self[tab]:lockContainer()
         self[tab].container = self.header
         self[tab]:onRelease(self[tab].adjLabel, event)
-        self[tab].adjLabel:echo(self[tab].tabText, nil, "c")
+        self[tab].adjLabel:echo(self[tab].tabText, "nocolor", "c")
         tab_pos = tab_pos or myWindow:findPosition(self[tab])
         if myWindow ~= self then
             self:changeTabContainer(tab, myWindow)
@@ -851,9 +817,10 @@ function Adjustable.TabWindow:setTabText(which, text)
     end
     
     if which then
+        self[self.tabs[which]]:setTitle("")
+        self[self.tabs[which]].titleText = "&amp;nbsp;&amp;nbsp;"..text
         self[self.tabs[which]].tabText = text
-        self[self.tabs[which]]:setTitle(text)
-        self[self.tabs[which]].adjLabel:echo(text, nil, "c")
+        self[self.tabs[which]].adjLabel:echo(text, "nocolor", "c")
         setTabToolTip(self[self.tabs[which]])
         return true
     end
