@@ -588,6 +588,10 @@ function Adjustable.TabWindow:onClick(tab, event)
         Adjustable.TabWindow.clicked = true
         Adjustable.TabWindow.clickedTab = self[tab]
         self[tab].adjLabel:echo(self[tab].tabText, "nocolor", "c")
+
+-- Raise an event when a tab is clicked, with the tab name and window name as arguments
+        raiseEvent("tabwindowTabClicked",self[tab].tabText, self.name)
+				
     end
     
     if self[tab].floating then
